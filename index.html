@@ -1,216 +1,197 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>SAM | Sistema de Cobranza</title>
-<link href="https://fonts.googleapis.com/css2?family=Exo+2:wght@900&family=Montserrat:wght@300;400;700;800&display=swap" rel="stylesheet">
-<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
-<style>
-:root { --accent:#FF7A00; --dark:#000; --gray:#F2F2F7; --red:#FF3B30; --green:#34C759; }
-*{ box-sizing:border-box; font-family:'Montserrat',sans-serif; -webkit-tap-highlight-color:transparent; outline:none; }
-html,body { margin:0; padding:0; background:#F2F2F7; height:100%; overflow:hidden; }
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>SAM | SISTEMA TOTAL</title>
+    <link href="https://fonts.googleapis.com/css2?family=Exo+2:wght@900&family=Montserrat:wght@300;400;700;800&display=swap" rel="stylesheet">
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <style>
+        :root { --accent:#FF7A00; --dark:#000; --gray:#F2F2F7; --red:#FF3B30; --green:#28a745; --max-w:600px; }
+        * { box-sizing:border-box; font-family:'Montserrat',sans-serif; outline:none; -webkit-tap-highlight-color:transparent; }
+        html,body { margin:0; background:#FFF; height:100%; }
+        body { overflow:hidden; }
 
-/* SPLASH */
-#screen-splash { display:flex; flex-direction:column; align-items:center; justify-content:center; position:fixed; inset:0; background:#fff; z-index:5000; }
-.logo-sam { font-family:'Exo 2',sans-serif; font-weight:900; font-size:clamp(90px,25vw,140px); letter-spacing:clamp(8px,2vw,16px); color:var(--accent); cursor:pointer; user-select:none; text-shadow:0 0 40px rgba(255,122,0,0.2); line-height:1; }
+        /* SPLASH */
+        #screen-splash { height:100vh; display:flex; flex-direction:column; justify-content:center; align-items:center; background:#FFF; position:fixed; width:100%; z-index:5000; }
+        .logo-sam { font-family:'Exo 2',sans-serif; font-weight:900; font-size:clamp(48px,12vw,80px); letter-spacing:clamp(8px,3vw,15px); color:#FF7A00; text-transform:uppercase; cursor:pointer; margin-bottom:20px; text-align:center; text-shadow:2px 2px 10px rgba(255,122,0,0.2); user-select:none; }
+        .grid-keys { display:grid; grid-template-columns:repeat(3,1fr); gap:clamp(10px,3vw,15px); width:clamp(220px,70vw,260px); margin:0 auto; }
+        .key { width:clamp(58px,18vw,70px); height:clamp(58px,18vw,70px); background:#f4f4f4; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:clamp(20px,5vw,24px); font-weight:700; color:#000; cursor:pointer; transition:0.15s; border:none; touch-action:manipulation; }
+        .key:active { background:#ddd; transform:scale(0.9); }
+        .pin-display { height:40px; font-size:clamp(28px,8vw,35px); color:var(--accent); letter-spacing:10px; margin-bottom:10px; text-align:center; min-width:150px; }
+        .key.ok { background:var(--accent); color:white; font-size:16px; font-weight:900; }
 
-/* PANELES */
-.panel { display:none; position:fixed; inset:0; overflow-y:auto; overflow-x:hidden; background:#F2F2F7; padding-bottom:100px; -webkit-overflow-scrolling:touch; }
-.panel-inner { max-width:600px; margin:0 auto; width:100%; }
-.nav-top { background:#000; color:white; padding:14px 18px; display:flex; justify-content:space-between; align-items:center; position:sticky; top:0; z-index:100; font-size:13px; font-weight:800; letter-spacing:1px; }
-.header { background:#000; color:#fff; padding:35px 20px 28px; border-radius:0 0 40px 40px; text-align:center; }
+        /* PANELES */
+        .panel { display:none; position:fixed; inset:0; background:#F9F9F9; overflow-y:auto; overflow-x:hidden; padding-bottom:100px; -webkit-overflow-scrolling:touch; }
+        .panel-inner { max-width:var(--max-w); margin:0 auto; width:100%; }
+        .nav-top { background:#000; color:white; padding:clamp(12px,3vw,15px) clamp(15px,4vw,20px); display:flex; justify-content:space-between; align-items:center; position:sticky; top:0; z-index:100; font-size:clamp(11px,3vw,13px); font-weight:800; }
+        .header { background:var(--dark); color:#FFF; padding:clamp(25px,5vw,40px) clamp(15px,4vw,20px) clamp(20px,4vw,30px); border-radius:0 0 40px 40px; text-align:center; }
 
-/* CARDS */
-.card { background:#fff; padding:18px 20px; border-radius:20px; margin:10px 16px; border:1px solid #eee; display:flex; justify-content:space-between; align-items:center; box-shadow:0 4px 10px rgba(0,0,0,0.03); cursor:pointer; }
-.card:active { background:#FFF8F3; }
-.status-dot { width:13px; height:13px; border-radius:50%; display:inline-block; margin-right:10px; flex-shrink:0; }
+        /* CARDS */
+        .card { background:#FFF; padding:clamp(14px,3vw,20px); border-radius:20px; margin:10px clamp(12px,3vw,18px); border:1px solid #EEE; display:flex; justify-content:space-between; align-items:center; box-shadow:0 4px 10px rgba(0,0,0,0.02); cursor:pointer; touch-action:manipulation; }
+        .status-dot { width:12px; height:12px; border-radius:50%; display:inline-block; margin-right:8px; flex-shrink:0; }
 
-/* MODALES */
-.modal { display:none; position:fixed; inset:0; background:rgba(0,0,0,0.85); z-index:9999; justify-content:center; align-items:flex-end; }
-@media(min-width:520px){ .modal { align-items:center; padding:20px; } .box { border-radius:30px!important; max-height:88vh!important; } }
-.box { background:#fff; width:100%; max-width:480px; padding:22px 20px; border-radius:30px 30px 0 0; max-height:90vh; overflow-y:auto; -webkit-overflow-scrolling:touch; }
+        /* HISTORIAL */
+        .hist-item { display:flex; justify-content:space-between; align-items:center; padding:10px 12px; border-radius:12px; margin-bottom:6px; background:#fff; cursor:pointer; border:1px solid #eee; touch-action:manipulation; }
+        .hist-item:active { background:#FFF3E0; }
+        .hist-hint { font-size:9px; color:#bbb; font-weight:700; margin-top:2px; }
 
-/* FORMULARIOS */
-label { font-size:10px; color:#888; font-weight:800; text-transform:uppercase; display:block; margin-top:14px; border-bottom:1px solid #eee; padding-bottom:5px; }
-input,select,textarea { width:100%; padding:13px 14px; margin:6px 0; border-radius:12px; border:1px solid #ddd; background:var(--gray); font-size:14px; font-weight:600; -webkit-appearance:none; appearance:none; }
-textarea { resize:vertical; font-family:'Montserrat',sans-serif; }
-.btn-m { width:100%; padding:15px; border-radius:14px; border:none; background:var(--accent); color:white; font-weight:900; cursor:pointer; margin-top:10px; font-size:14px; touch-action:manipulation; }
-.btn-exit { background:var(--red); color:white; border:none; padding:7px 14px; border-radius:10px; font-weight:800; font-size:11px; cursor:pointer; }
-.fab { position:fixed; bottom:25px; right:20px; background:var(--accent); color:white; width:65px; height:65px; border-radius:22px; border:none; font-size:38px; box-shadow:0 10px 25px rgba(255,122,0,0.4); cursor:pointer; display:flex; align-items:center; justify-content:center; z-index:200; line-height:1; }
+        /* MODALES */
+        .modal { display:none; position:fixed; inset:0; background:rgba(0,0,0,0.88); z-index:9999; justify-content:center; align-items:flex-end; padding:0; }
+        @media(min-width:520px){ .modal{align-items:center;padding:15px;} .box{border-radius:35px!important;max-height:90vh!important;} }
+        .box { background:#FFF; width:100%; max-width:480px; padding:clamp(18px,4vw,25px); border-radius:35px 35px 0 0; max-height:92vh; overflow-y:auto; -webkit-overflow-scrolling:touch; }
+        label { font-size:10px; color:#888; font-weight:800; text-transform:uppercase; display:block; margin-top:12px; border-bottom:1px solid #EEE; padding-bottom:4px; }
+        input,select { width:100%; padding:clamp(11px,3vw,14px); margin:5px 0; border-radius:12px; border:1px solid #DDD; background:var(--gray); font-size:clamp(13px,3.5vw,15px); font-weight:600; -webkit-appearance:none; appearance:none; }
+        textarea { width:100%; padding:12px; border-radius:12px; border:1px solid #DDD; background:var(--gray); font-size:13px; font-weight:600; resize:vertical; font-family:'Montserrat',sans-serif; }
+        .info-row { display:flex; justify-content:space-between; padding:8px 0; font-size:clamp(12px,3vw,14px); border-bottom:1px solid #F9F9F9; gap:10px; }
+        .info-row span { color:#666; flex-shrink:0; }
+        .info-row b { text-align:right; word-break:break-word; }
+        .wa-grid { display:grid; grid-template-columns:1fr 1fr 1fr; gap:8px; margin-top:10px; }
+        .wa-btn { background:#25D366; color:white; border:none; padding:clamp(8px,2vw,10px) 5px; border-radius:10px; font-size:clamp(8px,2vw,9px); font-weight:800; cursor:pointer; text-transform:uppercase; touch-action:manipulation; }
+        .hist-box { background:#F2F2F7; padding:10px; border-radius:15px; margin:10px 0; max-height:165px; overflow-y:auto; }
+        .btn-m { width:100%; padding:clamp(13px,3vw,16px); border-radius:15px; border:none; background:var(--accent); color:white; font-weight:900; cursor:pointer; margin-top:10px; font-size:clamp(13px,3vw,15px); touch-action:manipulation; }
+        .btn-exit { background:var(--red); color:white; border:none; padding:clamp(6px,2vw,8px) clamp(10px,3vw,15px); border-radius:10px; font-weight:800; font-size:clamp(10px,2.5vw,11px); cursor:pointer; touch-action:manipulation; }
+        .fab { position:fixed; bottom:clamp(20px,5vw,30px); right:clamp(15px,5vw,25px); background:var(--accent); color:white; width:clamp(58px,15vw,70px); height:clamp(58px,15vw,70px); border-radius:22px; border:none; font-size:clamp(32px,8vw,40px); box-shadow:0 10px 25px rgba(255,122,0,0.4); cursor:pointer; display:flex; align-items:center; justify-content:center; z-index:200; line-height:1; touch-action:manipulation; }
 
-/* INFO ROWS */
-.info-row { display:flex; justify-content:space-between; padding:9px 0; font-size:14px; border-bottom:1px solid #f5f5f5; gap:10px; }
-.info-row span { color:#666; flex-shrink:0; }
-.info-row b { text-align:right; word-break:break-word; }
+        /* SOPORTE */
+        .btn-soporte { display:none; position:fixed; bottom:110px; left:50%; transform:translateX(-50%); width:auto; padding:12px 24px; border-radius:50px; border:none; background:#25D366; color:white; font-weight:900; font-size:13px; cursor:pointer; box-shadow:0 6px 20px rgba(37,211,102,0.3); touch-action:manipulation; z-index:150; white-space:nowrap; align-items:center; gap:10px; justify-content:center; }
 
-/* WHATSAPP */
-.wa-btn { background:#25D366; color:white; border:none; padding:10px 6px; border-radius:10px; font-size:9px; font-weight:800; cursor:pointer; text-transform:uppercase; flex:1; }
+        /* ADMIN */
+        .admin-sec { font-size:10px; color:#888; font-weight:800; text-transform:uppercase; letter-spacing:2px; padding:5px 0 3px; border-bottom:2px solid #eee; margin-top:18px; }
+        .admin-box { background:#fff; border-radius:18px; border:1px solid #eee; padding:14px; margin-top:8px; }
 
-/* HISTORIAL */
-.hist-item { display:flex; justify-content:space-between; align-items:center; padding:10px 12px; border-radius:12px; margin-bottom:6px; background:#fff; cursor:pointer; border:1px solid #eee; }
-.hist-item:active { background:#FFF3E0; }
-.hist-hint { font-size:9px; color:#bbb; font-weight:700; margin-top:2px; }
-.hist-box { background:#f2f2f7; padding:10px; border-radius:15px; margin:8px 0; max-height:160px; overflow-y:auto; }
+        /* TOGGLE */
+        .toggle { position:relative; width:50px; height:28px; flex-shrink:0; }
+        .toggle input { opacity:0; width:0; height:0; }
+        .slider { position:absolute; inset:0; background:#ccc; border-radius:28px; cursor:pointer; transition:.3s; }
+        .slider:before { content:''; position:absolute; width:22px; height:22px; left:3px; bottom:3px; background:white; border-radius:50%; transition:.3s; }
+        input:checked + .slider { background:var(--accent); }
+        input:checked + .slider:before { transform:translateX(22px); }
+        .toggle-wrap { display:flex; align-items:center; justify-content:space-between; padding:13px 0; border-bottom:1px solid #f0f0f0; }
+        .toggle-wrap span { font-size:13px; font-weight:700; color:#333; flex:1; }
+        .cfg-row { display:flex; align-items:center; justify-content:space-between; padding:11px 0; border-bottom:1px solid #f0f0f0; gap:10px; }
+        .cfg-row span { font-size:13px; font-weight:700; color:#333; flex:1; }
+        .cfg-row input[type=number] { width:70px; text-align:center; flex-shrink:0; }
 
-/* TOGGLE */
-.toggle { position:relative; width:50px; height:28px; flex-shrink:0; }
-.toggle input { opacity:0; width:0; height:0; }
-.slider { position:absolute; inset:0; background:#ccc; border-radius:28px; cursor:pointer; transition:.3s; }
-.slider:before { content:''; position:absolute; width:22px; height:22px; left:3px; bottom:3px; background:white; border-radius:50%; transition:.3s; }
-input:checked + .slider { background:var(--accent); }
-input:checked + .slider:before { transform:translateX(22px); }
-.toggle-wrap { display:flex; align-items:center; justify-content:space-between; padding:13px 0; border-bottom:1px solid #f0f0f0; }
-.toggle-wrap span { font-size:13px; font-weight:700; color:#333; flex:1; }
-.cfg-row { display:flex; align-items:center; justify-content:space-between; padding:11px 0; border-bottom:1px solid #f0f0f0; gap:10px; }
-.cfg-row span { font-size:13px; font-weight:700; color:#333; flex:1; }
-.cfg-row input[type=number] { width:70px; text-align:center; flex-shrink:0; }
+        /* COMPROBANTE */
+        #comprobante-wrap { display:none; position:fixed; inset:0; background:rgba(0,0,0,0.92); z-index:99999; justify-content:center; align-items:center; padding:15px; }
+        #comprobante-container { background:#fff; width:100%; max-width:390px; border-radius:20px; overflow:hidden; }
+        #comprobante-canvas-box { width:100%; overflow:hidden; }
+        #comprobante-canvas-box canvas { width:100%!important; height:auto!important; display:block; }
+        .comp-actions { display:grid; grid-template-columns:1fr 1fr 1fr; gap:8px; padding:12px; background:#fff; }
+        .comp-btn { padding:12px 6px; border-radius:12px; border:none; font-size:10px; font-weight:900; cursor:pointer; text-transform:uppercase; color:white; touch-action:manipulation; }
+        .comp-btn.dl { background:var(--accent); }
+        .comp-btn.wa { background:#25D366; }
+        .comp-btn.cl { background:#555; }
 
-/* COMPROBANTE */
-#comprobante-wrap { display:none; position:fixed; inset:0; background:rgba(0,0,0,0.92); z-index:99999; justify-content:center; align-items:center; padding:15px; }
-#comprobante-container { background:#fff; width:100%; max-width:390px; border-radius:20px; overflow:hidden; }
-#comprobante-canvas-box { width:100%; overflow:hidden; }
-#comprobante-canvas-box canvas { width:100%!important; height:auto!important; display:block; }
-.comp-actions { display:grid; grid-template-columns:1fr 1fr 1fr; gap:8px; padding:12px; background:#fff; }
-.comp-btn { padding:12px 6px; border-radius:12px; border:none; font-size:10px; font-weight:900; cursor:pointer; text-transform:uppercase; color:white; touch-action:manipulation; }
-.comp-btn.dl { background:var(--accent); }
-.comp-btn.wa { background:#25D366; }
-.comp-btn.cl { background:#555; }
+        /* RECIBO */
+        #recibo-visual { position:fixed; left:-9999px; top:0; width:360px; background:#fff; font-family:'Montserrat',sans-serif; }
+        .rv-header { background:#000; color:#fff; padding:25px 20px 20px; text-align:center; }
+        .rv-logo { font-family:'Exo 2',sans-serif; font-weight:900; font-size:42px; letter-spacing:10px; color:#FF7A00; }
+        .rv-sub { font-size:9px; font-weight:800; color:#888; letter-spacing:3px; margin-top:4px; }
+        .rv-body { padding:18px 20px; }
+        .rv-title { font-size:11px; font-weight:800; color:#888; text-transform:uppercase; letter-spacing:2px; border-bottom:2px solid #FF7A00; padding-bottom:6px; margin-bottom:14px; }
+        .rv-row { display:flex; justify-content:space-between; padding:6px 0; font-size:12px; border-bottom:1px solid #f5f5f5; }
+        .rv-row span { color:#777; font-weight:600; }
+        .rv-row b { color:#000; font-weight:800; text-align:right; max-width:55%; word-break:break-word; }
+        .rv-monto { background:#000; border-radius:14px; padding:16px; text-align:center; margin:16px 0; }
+        .rv-monto-lbl { font-size:9px; color:#888; font-weight:800; letter-spacing:2px; text-transform:uppercase; }
+        .rv-monto-val { font-size:36px; font-weight:900; color:#FF7A00; }
+        .rv-saldo { background:#f9f9f9; border-radius:10px; padding:11px; text-align:center; margin-bottom:14px; }
+        .rv-saldo-lbl { font-size:9px; color:#888; font-weight:800; letter-spacing:1px; }
+        .rv-saldo-val { font-size:20px; font-weight:900; color:#FF3B30; }
+        .rv-footer { background:#f2f2f7; padding:11px 20px; text-align:center; font-size:9px; color:#aaa; font-weight:700; letter-spacing:1px; }
 
-/* RECIBO OFF-SCREEN */
-#recibo-visual { position:fixed; left:-9999px; top:0; width:360px; background:#fff; font-family:'Montserrat',sans-serif; }
-.rv-header { background:#000; color:#fff; padding:25px 20px 20px; text-align:center; }
-.rv-logo { font-family:'Exo 2',sans-serif; font-weight:900; font-size:42px; letter-spacing:10px; color:#FF7A00; }
-.rv-sub { font-size:9px; font-weight:800; color:#888; letter-spacing:3px; margin-top:4px; }
-.rv-line { height:2px; background:linear-gradient(90deg,transparent,#FF7A00,transparent); }
-.rv-body { padding:18px 20px; }
-.rv-title { font-size:11px; font-weight:800; color:#888; text-transform:uppercase; letter-spacing:2px; border-bottom:2px solid #FF7A00; padding-bottom:6px; margin-bottom:14px; }
-.rv-row { display:flex; justify-content:space-between; padding:6px 0; font-size:12px; border-bottom:1px solid #f5f5f5; }
-.rv-row span { color:#777; font-weight:600; }
-.rv-row b { color:#000; font-weight:800; text-align:right; max-width:55%; word-break:break-word; }
-.rv-monto { background:#000; border-radius:14px; padding:16px; text-align:center; margin:16px 0; }
-.rv-monto-lbl { font-size:9px; color:#888; font-weight:800; letter-spacing:2px; text-transform:uppercase; }
-.rv-monto-val { font-size:36px; font-weight:900; color:#FF7A00; }
-.rv-saldo { background:#f9f9f9; border-radius:10px; padding:11px; text-align:center; margin-bottom:14px; }
-.rv-saldo-lbl { font-size:9px; color:#888; font-weight:800; letter-spacing:1px; }
-.rv-saldo-val { font-size:20px; font-weight:900; color:#FF3B30; }
-.rv-footer { background:#f2f2f7; padding:11px 20px; text-align:center; font-size:9px; color:#aaa; font-weight:700; letter-spacing:1px; }
+        /* NOTIFICACIONES */
+        #notif-overlay { display:none; position:fixed; inset:0; background:rgba(0,0,0,0.85); z-index:19999; justify-content:center; align-items:flex-end; }
+        #notif-box { background:#fff; width:100%; max-width:480px; border-radius:30px 30px 0 0; padding:24px 20px; max-height:85vh; overflow-y:auto; }
+        .notif-group-title { font-size:10px; font-weight:900; text-transform:uppercase; letter-spacing:2px; margin:12px 0 6px; border-bottom:1px solid #eee; padding-bottom:4px; }
+        .notif-cli-card { background:#f9f9f9; border-radius:12px; padding:11px 13px; margin-bottom:7px; display:flex; justify-content:space-between; align-items:center; gap:10px; }
+        .notif-send-btn { background:#25D366; color:white; border:none; border-radius:9px; padding:8px 12px; font-size:10px; font-weight:900; cursor:pointer; white-space:nowrap; flex-shrink:0; }
+        .notif-send-btn.sent { background:#aaa; }
 
-/* NOTIFICACIONES */
-#notif-overlay { display:none; position:fixed; inset:0; background:rgba(0,0,0,0.85); z-index:19999; justify-content:center; align-items:flex-end; }
-#notif-box { background:#fff; width:100%; max-width:480px; border-radius:30px 30px 0 0; padding:24px 20px; max-height:85vh; overflow-y:auto; }
-.notif-group-title { font-size:10px; font-weight:900; text-transform:uppercase; letter-spacing:2px; margin:12px 0 6px; border-bottom:1px solid #eee; padding-bottom:4px; }
-.notif-cli-card { background:#f9f9f9; border-radius:12px; padding:11px 13px; margin-bottom:7px; display:flex; justify-content:space-between; align-items:center; gap:10px; }
-.notif-send-btn { background:#25D366; color:white; border:none; border-radius:9px; padding:8px 12px; font-size:10px; font-weight:900; cursor:pointer; white-space:nowrap; flex-shrink:0; }
-.notif-send-btn.sent { background:#aaa; }
+        /* ABONO */
+        .abono-header { background:#000; border-radius:16px; padding:18px; text-align:center; margin-bottom:14px; }
+        .abono-monto-big { font-size:clamp(32px,9vw,42px); font-weight:900; color:var(--accent); }
 
-/* PIN */
-#screen-splash .pin-display { font-size:36px; color:var(--accent); letter-spacing:18px; min-height:54px; display:flex; align-items:center; justify-content:center; margin:18px 0 28px; }
-.grid-keys { display:grid; grid-template-columns:repeat(3,1fr); gap:12px; width:min(260px,72vw); }
-.key { aspect-ratio:1; border-radius:50%; border:1.5px solid rgba(255,122,0,0.18); background:rgba(255,122,0,0.03); display:flex; align-items:center; justify-content:center; font-size:22px; font-weight:700; color:#222; cursor:pointer; transition:all .12s; touch-action:manipulation; }
-.key:active { background:rgba(255,122,0,0.12); border-color:var(--accent); transform:scale(0.92); }
-.key.ok { background:var(--accent); border-color:var(--accent); color:#fff; font-size:14px; font-weight:900; box-shadow:0 6px 20px rgba(255,122,0,0.3); }
-.key.ok:active { background:#CC5500; }
+        /* CUOTA PREVIEW */
+        #cuota-preview { display:none; background:#FFF3E0; border-radius:12px; padding:12px; margin:8px 0; text-align:center; }
 
-/* ADMIN */
-.admin-sec { font-size:10px; color:#888; font-weight:800; text-transform:uppercase; letter-spacing:2px; padding:5px 0 3px; border-bottom:2px solid #eee; margin-top:18px; }
-.admin-box { background:#fff; border-radius:18px; border:1px solid #eee; padding:14px; margin-top:8px; }
-.u-card { background:#fff; border-radius:16px; padding:13px 16px; margin-bottom:8px; border:1px solid #eee; display:flex; justify-content:space-between; align-items:center; cursor:pointer; }
-.u-card:active { background:#FFF8F3; }
+        /* TOAST */
+        #toast { position:fixed; bottom:110px; left:50%; transform:translateX(-50%); background:#000; color:#fff; padding:12px 24px; border-radius:30px; font-size:13px; font-weight:800; z-index:999999; opacity:0; transition:opacity 0.3s; pointer-events:none; white-space:nowrap; max-width:90vw; text-align:center; }
+        #toast.show { opacity:1; }
 
-/* SOPORTE */
-.btn-soporte-cobrador { display:none; align-items:center; justify-content:center; gap:8px; padding:11px 26px; border-radius:48px; border:none; background:#25D366; color:white; font-weight:900; font-size:13px; cursor:pointer; box-shadow:0 5px 18px rgba(37,211,102,0.28); position:fixed; bottom:98px; left:50%; transform:translateX(-50%); white-space:nowrap; z-index:150; }
-
-/* CUOTA PREVIEW */
-#cuota-preview { display:none; background:#FFF3E0; border-radius:12px; padding:12px; margin:8px 0; text-align:center; }
-
-/* TOAST */
-#toast { position:fixed; bottom:110px; left:50%; transform:translateX(-50%); background:#000; color:#fff; padding:12px 24px; border-radius:30px; font-size:13px; font-weight:800; z-index:999999; opacity:0; transition:opacity 0.3s; pointer-events:none; white-space:nowrap; max-width:90vw; text-align:center; }
-#toast.show { opacity:1; }
-
-/* WAKE LOCK */
-#wakelock-dot { width:7px; height:7px; border-radius:50%; background:#555; display:inline-block; margin-left:6px; vertical-align:middle; }
-#wakelock-dot.on { background:var(--green); }
-</style>
+        /* WAKE LOCK DOT */
+        #wakelock-dot { width:8px; height:8px; border-radius:50%; background:#555; display:inline-block; margin-left:6px; vertical-align:middle; transition:background 0.3s; }
+    </style>
 </head>
 <body>
 
+<!-- ZONA ADMIN INVISIBLE — triple toque esquina superior derecha -->
+<div id="zona-admin" style="position:fixed;top:0;right:0;width:80px;height:80px;z-index:9998;background:transparent;"></div>
+
 <!-- SPLASH -->
 <div id="screen-splash">
-    <!-- ZONA ADMIN — invisible, arriba a la derecha, 3 toques rápidos -->
-    <div id="zona-admin" style="position:absolute;top:0;right:0;width:80px;height:80px;z-index:10;cursor:pointer;"></div>
     <div class="logo-sam" id="logo-tap">SAM</div>
-    <div id="keypad-box" style="display:none;flex-direction:column;align-items:center;margin-top:20px">
-        <div id="mode-text" style="font-size:10px;font-weight:800;color:#888;letter-spacing:2px">ACCESO</div>
-        <div id="pin-dots" class="pin-display">&#8203;</div>
-        <div class="grid-keys">
-            <button class="key" onclick="teclear(1)">1</button>
-            <button class="key" onclick="teclear(2)">2</button>
-            <button class="key" onclick="teclear(3)">3</button>
-            <button class="key" onclick="teclear(4)">4</button>
-            <button class="key" onclick="teclear(5)">5</button>
-            <button class="key" onclick="teclear(6)">6</button>
-            <button class="key" onclick="teclear(7)">7</button>
-            <button class="key" onclick="teclear(8)">8</button>
-            <button class="key" onclick="teclear(9)">9</button>
-            <button class="key" style="color:var(--red);font-weight:900" onclick="teclear('C')">C</button>
-            <button class="key" onclick="teclear(0)">0</button>
-            <button class="key ok" onclick="validar()">OK</button>
-        </div>
-        <div style="margin-top:20px;width:clamp(220px,70vw,260px)">
-            <label style="border:none;margin-bottom:4px">CERRAR SESIÓN EN:</label>
-            <select id="session-limit" style="background:white">
-                <option value="60000">1 Minuto</option>
-                <option value="3600000" selected>1 Hora</option>
-                <option value="7200000">2 Horas</option>
-            </select>
-        </div>
+    <div style="font-size:10px;color:#bbb;font-weight:800;letter-spacing:3px;margin-bottom:30px;text-transform:uppercase">Sistema de Cobranza</div>
+    <div class="pin-display" id="pin-display">----</div>
+    <div class="grid-keys" id="keypad-box" style="display:none">
+        <button class="key" onclick="teclear('1')">1</button>
+        <button class="key" onclick="teclear('2')">2</button>
+        <button class="key" onclick="teclear('3')">3</button>
+        <button class="key" onclick="teclear('4')">4</button>
+        <button class="key" onclick="teclear('5')">5</button>
+        <button class="key" onclick="teclear('6')">6</button>
+        <button class="key" onclick="teclear('7')">7</button>
+        <button class="key" onclick="teclear('8')">8</button>
+        <button class="key" onclick="teclear('9')">9</button>
+        <button class="key" onclick="teclear('⌫')">⌫</button>
+        <button class="key" onclick="teclear('0')">0</button>
+        <button class="key ok" onclick="validar()">OK</button>
     </div>
-    <div style="margin-top:20px;font-size:10px;color:#bbb;font-weight:700;letter-spacing:1px" id="loading-txt">Toca SAM para ingresar</div>
-    <div id="loading-bar" style="width:0%;height:3px;background:var(--accent);border-radius:2px;margin-top:12px;transition:width 0.5s;min-width:clamp(220px,70vw,260px)"></div>
+    <div id="splash-msg" style="font-size:12px;color:#FF3B30;font-weight:700;margin-top:14px;min-height:20px;text-align:center;"></div>
+    <div style="font-size:10px;color:#ddd;font-weight:700;margin-top:40px;letter-spacing:2px;">SAM SISTEMA TOTAL · BETA</div>
 </div>
 
 <!-- PANEL ADMIN -->
 <div id="p-admin" class="panel">
-    <div class="nav-top">ADMINISTRACIÓN <button class="btn-exit" onclick="location.reload()">SALIR</button></div>
-    <div class="panel-inner" style="padding:20px">
-        <div class="admin-sec">👥 PERSONAL</div>
-        <button class="btn-m" style="background:#000;margin-top:10px" onclick="openM('m-nuevo-u')">+ NUEVO COBRADOR</button>
-        <div id="lista-usuarios-admin"></div>
-        <div class="admin-sec">🔑 PIN DE ADMINISTRADOR</div>
+    <div class="nav-top">
+        <span>⚙ PANEL ADMIN</span>
+        <button class="btn-exit" onclick="location.reload()">SALIR</button>
+    </div>
+    <div class="panel-inner" style="padding:16px">
+
+        <div class="admin-sec">👥 Cobradores</div>
         <div class="admin-box">
-            <label>PIN Actual</label>
-            <input type="number" id="pin-act" inputmode="numeric" placeholder="••••">
-            <label>Nuevo PIN</label>
-            <input type="number" id="pin-nvo" inputmode="numeric" placeholder="••••">
-            <label>Confirmar PIN</label>
-            <input type="number" id="pin-conf" inputmode="numeric" placeholder="••••">
-            <button class="btn-m" onclick="cambiarPinMaster()">CAMBIAR PIN ADMIN</button>
+            <div id="lista-usuarios" style="margin-bottom:10px"></div>
+            <button class="btn-m" onclick="openM('m-nuevo-usuario')">+ AGREGAR COBRADOR</button>
         </div>
-        <div class="admin-sec">📞 SOPORTE WHATSAPP</div>
+
+        <div class="admin-sec">💬 Número de Soporte</div>
         <div class="admin-box">
-            <label>Número del soporte</label>
-            <div style="display:flex;gap:6px">
-                <select id="sop-pref" style="width:90px">
+            <div style="font-size:12px;color:#888;margin-bottom:8px">Número que verán los cobradores para contactar soporte</div>
+            <div style="display:flex;gap:8px">
+                <select id="admin-soporte-pref" style="width:90px">
                     <option value="593">+593</option>
                     <option value="57">+57</option>
                     <option value="51">+51</option>
                     <option value="52">+52</option>
-                    <option value="54">+54</option>
                 </select>
-                <input type="number" id="sop-num" style="flex:1" inputmode="tel" placeholder="Número">
+                <input type="number" id="admin-soporte-num" placeholder="Número de soporte" inputmode="tel" style="flex:1">
             </div>
-            <button class="btn-m" onclick="guardarSoporte()">GUARDAR NÚMERO</button>
+            <div id="soporte-num-actual" style="font-size:11px;color:#FF9500;font-weight:700;margin-top:8px;text-align:center"></div>
+            <button class="btn-m" style="background:#25D366" onclick="guardarNumSoporte()">💾 GUARDAR NÚMERO</button>
         </div>
-        <div class="admin-sec">📊 ESTADÍSTICAS</div>
+
+        <div class="admin-sec">🔐 Seguridad</div>
         <div class="admin-box">
-            <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;text-align:center">
-                <div><div style="font-size:26px;font-weight:900;color:var(--accent)" id="adm-total">$0</div><div style="font-size:10px;color:#888;font-weight:700">CARTERA TOTAL</div></div>
-                <div><div style="font-size:26px;font-weight:900;color:var(--accent)" id="adm-nclientes">0</div><div style="font-size:10px;color:#888;font-weight:700">CLIENTES</div></div>
-            </div>
+            <div style="font-size:12px;color:#888;margin-bottom:8px">Cambiar PIN de administrador</div>
+            <input type="number" id="admin-nuevo-pin" placeholder="Nuevo PIN (4 dígitos)" inputmode="numeric">
+            <button class="btn-m" onclick="cambiarPinMaster()">🔑 CAMBIAR PIN ADMIN</button>
         </div>
+
     </div>
 </div>
 
@@ -225,100 +206,163 @@ input:checked + .slider:before { transform:translateX(22px); }
     </div>
     <div class="panel-inner">
         <div class="header">
-            <div style="font-size:10px;color:#aaa;margin-bottom:4px">
-                ⏱ <span id="timer-disp">00:00</span> &nbsp;|&nbsp;
-                <span id="inact-disp" style="color:#FF9500"></span>
+            <div style="font-size:10px;color:#AAA;display:flex;gap:12px;justify-content:center;flex-wrap:wrap;margin-bottom:8px">
+                <span>⏱ ACTIVO: <span id="timer-display">00:00</span></span>
+                <span id="inactivo-display" style="color:#FF9500"></span>
             </div>
-            <div id="u-total" style="font-size:clamp(32px,9vw,44px);font-weight:900;color:var(--accent)">$ 0.00</div>
-            <div style="font-size:11px;color:#666;margin-top:4px" id="u-count">0 clientes</div>
+            <div id="u-total" style="font-size:clamp(34px,10vw,45px);font-weight:900;color:var(--accent)">$ 0.00</div>
+            <div id="resumen-estados" style="font-size:11px;color:#AAA;margin-top:5px;min-height:16px"></div>
         </div>
-        <div style="padding:10px 16px 0">
-            <input type="text" id="buscar" placeholder="🔍 Buscar cliente..." oninput="filtrarCli()" style="margin:0">
-        </div>
-        <div id="lista-cli"></div>
+        <input type="search" id="buscar-cli" placeholder="🔍 Buscar cliente..." oninput="filtrarClientes()" style="margin:12px 18px;width:calc(100% - 36px);border-radius:14px;padding:12px 16px;border:1.5px solid #eee;font-size:13px;font-weight:600;background:#fff;">
+        <div id="lista-clientes"></div>
     </div>
-    <button class="fab" onclick="openM('m-nuevo-cli')">+</button>
-    <button class="btn-soporte-cobrador" id="btn-soporte-cobrador" onclick="abrirSoporte()">💬 SOPORTE</button>
+    <button class="btn-soporte" id="btn-soporte-cobrador" onclick="abrirSoporte()">💬 SOPORTE</button>
+    <button class="fab" onclick="openM('m-nuevo-cliente')">+</button>
 </div>
 <!-- MODAL DETALLE CLIENTE -->
-<div id="m-det-cli" class="modal">
+<div id="m-det-cliente" class="modal">
     <div class="box">
-        <h2 id="det-nom" style="color:var(--accent);margin:0 0 3px;font-size:clamp(18px,5vw,22px)"></h2>
-        <div id="det-prod" style="font-size:11px;color:#aaa;font-weight:700;margin-bottom:12px"></div>
-        <div class="info-row"><span>Fecha Entrada:</span><b id="det-fentrada" style="color:#888">---</b></div>
-        <div class="info-row"><span>Fecha Cobro:</span><b id="det-fcobro">---</b></div>
-        <div class="info-row"><span>Dirección:</span><b id="det-dir">---</b></div>
-        <div class="info-row"><span>Frecuencia:</span><b id="det-frec">---</b></div>
-        <div class="info-row"><span>Cuota:</span><b id="det-cuota" style="color:var(--accent)">---</b></div>
-        <div class="info-row" style="font-size:clamp(14px,4vw,17px)"><span>Saldo:</span><b id="det-saldo" style="color:var(--red)">$ 0.00</b></div>
+        <h2 id="det-cli-nom" style="color:var(--accent);margin:0 0 10px">CLIENTE</h2>
+        <div class="info-row"><span>Fecha Entrada:</span><b id="det-cli-fentrada" style="color:#888">---</b></div>
+        <div class="info-row"><span>Fecha Cobro:</span><b id="det-cli-fcobro">---</b></div>
+        <div class="info-row"><span>Productos:</span><b id="det-cli-prod" style="color:#333;font-size:12px">---</b></div>
+        <div class="info-row"><span>Dirección:</span><b id="det-cli-dir">---</b></div>
+        <div class="info-row"><span>Frecuencia:</span><b id="det-cli-frec">---</b></div>
+        <div class="info-row"><span>Cuota:</span><b id="det-cli-cuota" style="color:var(--accent)">---</b></div>
+        <div class="info-row" style="font-size:clamp(15px,4vw,18px)"><span>Saldo:</span><b id="det-cli-saldo" style="color:var(--red)">$ 0.00</b></div>
+
         <label>NOTIFICACIONES WHATSAPP</label>
-        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-top:8px">
+        <div class="wa-grid">
             <button class="wa-btn" onclick="enviarWA(1)">RECORDAR</button>
             <button class="wa-btn" onclick="enviarWA(2)" style="background:#FF9500">PAGO HOY</button>
             <button class="wa-btn" onclick="enviarWA(3)" style="background:var(--red)">ATRASADO</button>
         </div>
-        <label>HISTORIAL <span style="font-size:9px;color:#bbb;text-transform:none;border:none;font-weight:600">(toca para editar)</span></label>
-        <div id="det-hist" class="hist-box"></div>
+
+        <label>HISTORIAL <span style="font-size:9px;color:#bbb;text-transform:none;border:none;font-weight:600">(toca para ver / editar)</span></label>
+        <div id="det-cli-hist" class="hist-box"></div>
+
+        <label>📅 PRÓXIMAS FECHAS DE COBRO</label>
+        <div id="det-cli-calendario" style="background:#F2F2F7;border-radius:15px;padding:10px;margin:8px 0;max-height:180px;overflow-y:auto;"></div>
+
         <label>REGISTRAR PAGO</label>
-        <div style="display:flex;gap:8px;align-items:center">
-            <input type="number" id="input-abono" placeholder="Monto $" inputmode="decimal" style="flex:1;margin:5px 0">
-            <button style="background:var(--accent);color:#fff;border:none;border-radius:12px;padding:13px 11px;font-weight:900;font-size:12px;white-space:nowrap;cursor:pointer" onclick="usarCuota()">CUOTA</button>
-        </div>
-        <button class="btn-m" onclick="registrarAbono()">✅ REGISTRAR PAGO</button>
+        <input type="number" id="input-abono" placeholder="Monto Abono $" inputmode="decimal">
+        <button class="btn-m" style="background:#000;margin-top:6px" onclick="usarCuota()">↙ USAR CUOTA</button>
+        <button class="btn-m" onclick="registrarAbono()">✓ REGISTRAR PAGO</button>
         <button class="btn-m" style="background:#555" onclick="abrirEditarCliente()">✏️ EDITAR CLIENTE</button>
         <button class="btn-m" style="background:var(--red)" onclick="eliminarClienteCompleto()">🗑 ELIMINAR CLIENTE</button>
         <button class="btn-m" style="background:none;color:#888" onclick="closeM()">CERRAR</button>
     </div>
 </div>
 
-<!-- MODAL NUEVO CLIENTE -->
-<div id="m-nuevo-cli" class="modal">
+<!-- MODAL DETALLE ABONO -->
+<div id="m-abono-detalle" class="modal">
     <div class="box">
-        <h3 style="margin:0 0 10px">➕ NUEVA VENTA</h3>
-        <label>Nombre Cliente</label><input type="text" id="nc-nom" autocomplete="off">
-        <label>Producto / Guía</label><input type="text" id="nc-prod" autocomplete="off">
+        <div class="abono-header">
+            <div style="font-size:10px;color:#888;font-weight:800;letter-spacing:2px">PAGO REGISTRADO</div>
+            <div class="abono-monto-big" id="ad-monto-display">$ 0.00</div>
+            <div style="font-size:12px;color:#888;margin-top:4px" id="ad-fecha-display">---</div>
+            <div style="font-size:10px;color:#555;margin-top:2px" id="ad-num-display">---</div>
+        </div>
+        <div class="info-row"><span>Cliente:</span><b id="ad-cliente">---</b></div>
+        <div class="info-row"><span>Saldo después:</span><b id="ad-saldo" style="color:var(--red)">---</b></div>
+        <label>ACCIONES</label>
+        <button class="btn-m" onclick="verComprobanteDesdeDetalle()">📄 VER COMPROBANTE</button>
+        <button class="btn-m" style="background:#25D366" onclick="reenviarWADesdeDetalle()">📲 REENVIAR POR WHATSAPP</button>
+        <label>EDITAR MONTO</label>
+        <div style="display:flex;gap:8px;margin-top:5px">
+            <input type="number" id="ad-nuevo-monto" placeholder="Nuevo monto $" inputmode="decimal" style="flex:1;margin:0">
+            <button class="btn-m" style="width:auto;padding:13px 18px;margin:0;flex-shrink:0" onclick="guardarEdicionAbono()">GUARDAR</button>
+        </div>
+        <div style="background:#FFF3E0;border-radius:10px;padding:10px;margin-top:8px;font-size:11px;color:#888">⚠ Al editar se recalcula el saldo automáticamente.</div>
+        <button class="btn-m" style="background:var(--red);margin-top:12px" onclick="eliminarAbonoIndividual()">🗑 ELIMINAR ESTE ABONO</button>
+        <button class="btn-m" style="background:none;color:#888" onclick="closeM()">CERRAR</button>
+    </div>
+</div>
+
+<!-- MODAL NUEVO CLIENTE -->
+<div id="m-nuevo-cliente" class="modal">
+    <div class="box">
+        <h3 style="margin:0 0 12px">➕ NUEVA VENTA</h3>
+        <label>Nombre del Cliente</label>
+        <input type="text" id="nc-nom" autocomplete="off" placeholder="Ej: María García">
+
+        <label>PRODUCTOS</label>
+        <div id="prod-lista"></div>
+        <button type="button" onclick="agregarFilaProducto()" style="width:100%;padding:10px;border-radius:12px;border:2px dashed rgba(255,122,0,0.35);background:rgba(255,122,0,0.03);color:#FF7A00;font-weight:800;font-size:12px;cursor:pointer;margin-top:4px;">+ AGREGAR PRODUCTO</button>
+        <div id="prod-total-box" style="display:none;background:#000;border-radius:12px;padding:12px;margin-top:8px;text-align:center;">
+            <div style="font-size:10px;color:#888;font-weight:700;letter-spacing:1px;">TOTAL PRODUCTOS</div>
+            <div id="prod-total-val" style="font-size:28px;font-weight:900;color:#FF7A00;">$ 0.00</div>
+        </div>
+
         <label>WhatsApp</label>
-        <div style="display:flex;gap:6px">
-            <select id="nc-pref" style="width:85px"><option value="593">+593</option><option value="57">+57</option><option value="51">+51</option><option value="52">+52</option></select>
-            <input type="number" id="nc-tel" style="flex:1" inputmode="tel">
+        <div style="display:flex;gap:5px">
+            <select id="nc-pref" style="width:90px">
+                <option value="593">+593</option>
+                <option value="57">+57</option>
+                <option value="51">+51</option>
+                <option value="52">+52</option>
+            </select>
+            <input type="number" id="nc-tel" style="flex:1;margin:5px 0" inputmode="tel" placeholder="Número">
         </div>
+
         <div style="display:flex;gap:10px">
-            <div style="flex:1"><label>Total $</label><input type="number" id="nc-tot" inputmode="decimal" oninput="calcularCuota();recalcPrevio()"></div>
-            <div style="flex:1"><label>Entrada $</label><input type="number" id="nc-ini" value="0" inputmode="decimal" oninput="calcularCuota();recalcPrevio()"></div>
+            <div style="flex:1">
+                <label>Total $ <span style="color:var(--accent);font-size:9px;text-transform:none;font-weight:700">(se llena solo)</span></label>
+                <input type="number" id="nc-tot" inputmode="decimal" oninput="calcularCuota()" placeholder="0.00">
+            </div>
+            <div style="flex:1">
+                <label>Entrada $</label>
+                <input type="number" id="nc-ini" value="0" inputmode="decimal" oninput="calcularCuota()">
+            </div>
         </div>
+
         <label>N° de Cuotas</label>
-        <input type="number" id="nc-ncuotas" placeholder="Ej: 12" inputmode="numeric" oninput="calcularCuota();recalcPrevio()">
-        <label>Frecuencia</label>
+        <input type="number" id="nc-ncuotas" placeholder="Ej: 12" inputmode="numeric" oninput="calcularCuota()">
+
+        <label>Frecuencia de Pago</label>
         <select id="nc-frec" onchange="calcularCuota()">
-            <option>Diario</option><option>Semanal</option><option>Quincenal</option><option selected>Mensual</option>
+            <option>Diario</option>
+            <option>Semanal</option>
+            <option>Quincenal</option>
+            <option selected>Mensual</option>
         </select>
+
         <div id="cuota-preview">
             <div style="font-size:10px;color:#888;font-weight:800">CUOTA CALCULADA</div>
-            <div id="cuota-val" style="font-size:26px;font-weight:900;color:var(--accent)">$ 0.00</div>
+            <div id="cuota-valor" style="font-size:26px;font-weight:900;color:var(--accent)">$ 0.00</div>
         </div>
-        <label>Dirección</label><input type="text" id="nc-dir" autocomplete="off">
-        <label>Fecha Primer Cobro</label><input type="date" id="nc-fecha">
+
+        <label>Dirección</label>
+        <input type="text" id="nc-dir" autocomplete="off" placeholder="Opcional">
+
+        <label>Fecha Primer Cobro</label>
+        <input type="date" id="nc-fecha">
+
         <!-- HISTORIAL PREVIO -->
         <div style="background:#FFF8F3;border-radius:16px;padding:14px;margin-top:12px;border:1px solid rgba(255,122,0,0.2)">
             <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
                 <div>
                     <div style="font-size:12px;font-weight:800;color:#FF7A00">📋 ¿Cliente con historial previo?</div>
-                    <div style="font-size:10px;color:#aaa;margin-top:2px">Si ya tenía pagos antes del sistema</div>
+                    <div style="font-size:10px;color:#aaa;margin-top:2px">Si ya tenía pagos antes de entrar al sistema</div>
                 </div>
-                <label class="toggle"><input type="checkbox" id="nc-tiene-previo" onchange="togglePrevio()"><span class="slider"></span></label>
+                <label class="toggle" style="margin:0;border:none">
+                    <input type="checkbox" id="nc-tiene-previo" onchange="togglePrevio()">
+                    <span class="slider"></span>
+                </label>
             </div>
             <div id="previo-campos" style="display:none">
-                <div style="font-size:11px;color:#888;font-weight:700;margin:8px 0 4px">Ingresa cada pago tal como está en tu cuaderno:</div>
+                <div style="font-size:11px;color:#888;font-weight:700;margin:8px 0 4px;">Ingresa cada pago tal como está en tu cuaderno:</div>
                 <div id="previo-lista-pagos"></div>
-                <button type="button" onclick="agregarFilaPrevio()" style="width:100%;padding:11px;border-radius:12px;border:2px dashed rgba(255,122,0,0.4);background:rgba(255,122,0,0.04);color:#FF7A00;font-weight:800;font-size:13px;cursor:pointer;margin-top:6px">+ AGREGAR PAGO DEL CUADERNO</button>
-                <div id="previo-resumen" style="display:none;background:#fff;border-radius:10px;padding:12px;margin-top:10px;text-align:center;border:1px solid #eee">
-                    <div style="font-size:10px;color:#888;font-weight:700">YA PAGÓ</div>
-                    <div style="font-size:22px;font-weight:900;color:var(--green)" id="previo-pagado">$ 0.00</div>
-                    <div style="font-size:10px;color:#888;font-weight:700;margin-top:6px">SALDO REAL A COBRAR</div>
-                    <div style="font-size:22px;font-weight:900;color:var(--red)" id="previo-saldo">$ 0.00</div>
+                <button type="button" onclick="agregarFilaPrevio()" style="width:100%;padding:11px;border-radius:12px;border:2px dashed rgba(255,122,0,0.4);background:rgba(255,122,0,0.04);color:#FF7A00;font-weight:800;font-size:13px;cursor:pointer;margin-top:6px;">+ AGREGAR PAGO DEL CUADERNO</button>
+                <div id="previo-resumen" style="display:none;background:#fff;border-radius:10px;padding:12px;margin-top:10px;text-align:center;border:1px solid #eee;">
+                    <div style="font-size:10px;color:#888;font-weight:700;">YA PAGÓ</div>
+                    <div style="font-size:22px;font-weight:900;color:var(--green);" id="previo-pagado">$ 0.00</div>
+                    <div style="font-size:10px;color:#888;font-weight:700;margin-top:6px;">SALDO REAL A COBRAR</div>
+                    <div style="font-size:22px;font-weight:900;color:var(--red);" id="previo-saldo">$ 0.00</div>
                 </div>
             </div>
         </div>
+
         <button class="btn-m" onclick="crearCli()">💾 GUARDAR VENTA</button>
         <button class="btn-m" style="background:none;color:#888" onclick="closeM()">CANCELAR</button>
     </div>
@@ -329,71 +373,59 @@ input:checked + .slider:before { transform:translateX(22px); }
     <div class="box">
         <h3 style="margin:0 0 12px">✏️ EDITAR CLIENTE</h3>
         <label>Nombre</label><input type="text" id="ec-nom" autocomplete="off">
-        <label>Producto / Guía</label><input type="text" id="ec-prod" autocomplete="off">
+        <label>Productos / Guía</label><input type="text" id="ec-prod" autocomplete="off" placeholder="Ej: Nevera, Televisor, Celular">
         <label>WhatsApp</label>
         <div style="display:flex;gap:5px">
-            <select id="ec-pref" style="width:90px"><option value="593">+593</option><option value="57">+57</option><option value="51">+51</option><option value="52">+52</option></select>
-            <input type="number" id="ec-tel" style="flex:1" inputmode="tel">
+            <select id="ec-pref" style="width:90px">
+                <option value="593">+593</option>
+                <option value="57">+57</option>
+                <option value="51">+51</option>
+                <option value="52">+52</option>
+            </select>
+            <input type="number" id="ec-tel" style="flex:1;margin:5px 0" inputmode="tel">
         </div>
         <label>Saldo Actual $</label><input type="number" id="ec-saldo" inputmode="decimal">
         <label>Cuota $</label><input type="number" id="ec-cuota" inputmode="decimal">
-        <label>Dirección</label><input type="text" id="ec-dir">
-        <label>Fecha Entrada</label><input type="date" id="ec-fentrada">
-        <label>Fecha Cobro</label><input type="date" id="ec-fecha">
+        <label>Dirección</label><input type="text" id="ec-dir" autocomplete="off">
+        <label>Fecha Entrada</label><input type="date" id="ec-fecha-entrada">
+        <label>Próxima Fecha de Cobro</label><input type="date" id="ec-fecha">
         <label>Frecuencia</label>
-        <select id="ec-frec"><option>Diario</option><option>Semanal</option><option>Quincenal</option><option>Mensual</option></select>
+        <select id="ec-frec">
+            <option>Diario</option>
+            <option>Semanal</option>
+            <option>Quincenal</option>
+            <option>Mensual</option>
+        </select>
         <button class="btn-m" onclick="guardarEdicionCliente()">💾 GUARDAR CAMBIOS</button>
         <button class="btn-m" style="background:none;color:#888" onclick="closeM()">CANCELAR</button>
     </div>
 </div>
 
-<!-- MODAL DETALLE ABONO -->
-<div id="m-abono-det" class="modal">
+<!-- MODAL NUEVO USUARIO -->
+<div id="m-nuevo-usuario" class="modal">
     <div class="box">
-        <div style="background:#000;border-radius:16px;padding:18px;text-align:center;margin-bottom:14px">
-            <div style="font-size:10px;color:#aaa;font-weight:700;letter-spacing:2px">COMPROBANTE</div>
-            <div id="abd-monto" style="font-size:38px;font-weight:900;color:var(--accent)">$ 0.00</div>
-            <div id="abd-num" style="font-size:11px;color:#aaa;margin-top:3px"></div>
-        </div>
-        <div class="info-row"><span>Cliente:</span><b id="abd-cli"></b></div>
-        <div class="info-row"><span>Fecha:</span><b id="abd-fecha"></b></div>
-        <div class="info-row"><span>Cobrador:</span><b id="abd-cobrador"></b></div>
-        <div class="info-row"><span>Saldo después:</span><b id="abd-saldo" style="color:var(--red)"></b></div>
-        <button class="btn-m" onclick="verComprobanteDesdeDetalle()">📄 VER COMPROBANTE</button>
-        <button class="btn-m" style="background:#25D366" onclick="reenviarWADesdeDetalle()">📲 REENVIAR WHATSAPP</button>
-        <label>EDITAR MONTO</label>
-        <div style="display:flex;gap:8px;margin-top:5px">
-            <input type="number" id="abd-nuevo-monto" placeholder="Nuevo monto $" inputmode="decimal" style="flex:1">
-            <button class="btn-m" style="width:auto;padding:12px 16px;margin:0" onclick="guardarEdicionAbono()">OK</button>
-        </div>
-        <button class="btn-m" style="background:var(--red);margin-top:12px" onclick="eliminarAbono()">🗑 ELIMINAR ABONO</button>
-        <button class="btn-m" style="background:none;color:#888" onclick="closeM()">CERRAR</button>
-    </div>
-</div>
-
-<!-- MODAL NUEVO COBRADOR -->
-<div id="m-nuevo-u" class="modal">
-    <div class="box">
-        <h3 style="margin:0 0 10px">👤 NUEVO COBRADOR</h3>
-        <label>Nombre</label><input type="text" id="nu-nom">
-        <label>PIN (4 dígitos)</label><input type="number" id="nu-pin" inputmode="numeric">
-        <label>Vigencia hasta</label><input type="date" id="nu-vence">
-        <button class="btn-m" onclick="crearUsuario()">CREAR</button>
+        <h3 style="margin:0 0 12px">👤 NUEVO COBRADOR</h3>
+        <label>Nombre</label><input type="text" id="nu-nom" autocomplete="off">
+        <label>PIN (4 dígitos)</label><input type="number" id="nu-pin" inputmode="numeric" maxlength="4">
+        <label>Vence</label><input type="date" id="nu-vence">
+        <button class="btn-m" onclick="crearUsuario()">💾 GUARDAR COBRADOR</button>
         <button class="btn-m" style="background:none;color:#888" onclick="closeM()">CANCELAR</button>
     </div>
 </div>
-
-<!-- MODAL EDITAR COBRADOR -->
-<div id="m-edit-u" class="modal">
+<!-- MODAL EDITAR USUARIO -->
+<div id="m-editar-usuario" class="modal">
     <div class="box">
-        <h3 style="margin:0 0 10px">✏️ EDITAR COBRADOR</h3>
-        <label>Nombre</label><input type="text" id="ed-u-nom">
-        <label>PIN</label><input type="number" id="ed-u-pin">
+        <h3 style="margin:0 0 12px">✏️ EDITAR COBRADOR</h3>
+        <label>Nombre</label><input type="text" id="eu-nom" autocomplete="off">
+        <label>PIN</label><input type="number" id="eu-pin" inputmode="numeric">
+        <label>Vence</label><input type="date" id="eu-vence">
         <label>Estado</label>
-        <select id="ed-u-status"><option value="activo">ACTIVO</option><option value="desactivado">DESACTIVADO</option></select>
-        <label>Vigencia hasta</label><input type="date" id="ed-u-vence">
-        <button class="btn-m" onclick="actualizarUsuario()">GUARDAR</button>
-        <button class="btn-m" style="background:var(--red)" onclick="eliminarUsuario()">ELIMINAR</button>
+        <select id="eu-status">
+            <option value="activo">Activo</option>
+            <option value="inactivo">Inactivo</option>
+        </select>
+        <button class="btn-m" onclick="actualizarUsuario()">💾 GUARDAR</button>
+        <button class="btn-m" style="background:var(--red)" onclick="eliminarUsuario()">🗑 ELIMINAR</button>
         <button class="btn-m" style="background:none;color:#888" onclick="closeM()">CANCELAR</button>
     </div>
 </div>
@@ -401,32 +433,60 @@ input:checked + .slider:before { transform:translateX(22px); }
 <!-- MODAL CONFIG NOTIFICACIONES -->
 <div id="m-config-notif" class="modal">
     <div class="box">
-        <h3 style="margin:0 0 4px">⚙ NOTIFICACIONES</h3>
-        <p style="font-size:12px;color:#888;margin:0 0 8px">Configura cuándo enviar WhatsApp automáticamente.</p>
-        <div class="toggle-wrap"><span>🔔 Activar notificaciones</span><label class="toggle"><input type="checkbox" id="cfg-sw-activo" onchange="toggleSW()"><span class="slider"></span></label></div>
-        <div class="cfg-row"><span>📅 Días antes (recordatorio)</span><input type="number" id="cfg-dias-recuerdo" value="2" min="0" max="30" inputmode="numeric"></div>
-        <div class="cfg-row"><span>🔴 Días de atraso</span><input type="number" id="cfg-dias-atraso" value="1" min="1" max="30" inputmode="numeric"></div>
-        <label>MODO AL ABRIR APP</label>
-        <select id="cfg-modo-notif">
-            <option value="preguntar">Preguntar antes de enviar</option>
-            <option value="auto">Enviar automáticamente</option>
-            <option value="solo-ver">Solo mostrar lista</option>
-        </select>
-        <label>HORA DE ENVÍO</label>
-        <input type="time" id="cfg-hora-envio" value="08:00">
-        <label>✏️ MENSAJE — RECORDATORIO</label>
-        <div style="font-size:10px;color:#aaa;margin-bottom:4px">Variables: <b>{nombre}</b> {saldo} {cuota} {fecha}</div>
-        <textarea id="cfg-msg-1" rows="3" style="width:100%;padding:12px;border-radius:12px;border:1px solid #ddd;background:#f2f2f7;font-size:13px;font-weight:600;resize:vertical;font-family:'Montserrat',sans-serif">Hola {nombre}, le recordamos cordialmente que se acerca su próxima fecha de pago el {fecha}. Su saldo actual es ${saldo}. ¡Gracias por su atención!</textarea>
-        <label>✏️ MENSAJE — PAGO HOY</label>
-        <textarea id="cfg-msg-2" rows="3" style="width:100%;padding:12px;border-radius:12px;border:1px solid #ddd;background:#f2f2f7;font-size:13px;font-weight:600;resize:vertical;font-family:'Montserrat',sans-serif">Hola {nombre}, le recordamos que el día de hoy corresponde realizar su abono de ${cuota}. Estaremos atentos para ayudarle. ¡Gracias!</textarea>
-        <label>✏️ MENSAJE — ATRASADO</label>
-        <textarea id="cfg-msg-3" rows="3" style="width:100%;padding:12px;border-radius:12px;border:1px solid #ddd;background:#f2f2f7;font-size:13px;font-weight:600;resize:vertical;font-family:'Montserrat',sans-serif">Estimado(a) {nombre}, notamos que su cuenta presenta un saldo pendiente de ${saldo}. Le pedimos ponerse al día para evitar inconvenientes. Quedamos a su disposición.</textarea>
-        <label>✏️ MENSAJE — CONFIRMACIÓN DE PAGO</label>
-        <div style="font-size:10px;color:#aaa;margin-bottom:4px">Variable extra: <b>{monto}</b> = monto pagado</div>
-        <textarea id="cfg-msg-4" rows="3" style="width:100%;padding:12px;border-radius:12px;border:1px solid #ddd;background:#f2f2f7;font-size:13px;font-weight:600;resize:vertical;font-family:'Montserrat',sans-serif">✅ Hola {nombre}, confirmamos recepción de su pago de ${monto}. Su saldo actual es ${saldo}. ¡Gracias por su puntualidad!</textarea>
-        <button class="btn-m" onclick="guardarConfigNotif()">💾 GUARDAR TODO</button>
-        <button class="btn-m" style="background:#555" onclick="probarNotifAhora()">🧪 PROBAR AHORA</button>
-        <button class="btn-m" style="background:none;color:#888" onclick="closeM()">CANCELAR</button>
+        <h3 style="margin:0 0 4px">🔔 NOTIFICACIONES</h3>
+        <div style="font-size:11px;color:#aaa;margin-bottom:14px">El panel de atrasados sale solo al entrar. Configura recordatorios adicionales aquí.</div>
+
+        <div class="toggle-wrap">
+            <span>Activar recordatorios automáticos</span>
+            <label class="toggle" style="margin:0;border:none">
+                <input type="checkbox" id="cfg-sw-activo" onchange="toggleSW()">
+                <span class="slider"></span>
+            </label>
+        </div>
+        <div class="cfg-row">
+            <span>Días de recordatorio previo</span>
+            <input type="number" id="cfg-dias-recuerdo" value="2" min="1" max="15">
+        </div>
+        <div class="cfg-row">
+            <span>Días para considerar atrasado</span>
+            <input type="number" id="cfg-dias-atraso" value="1" min="1" max="30">
+        </div>
+        <div class="cfg-row">
+            <span>Hora de notificación diaria</span>
+            <input type="time" id="cfg-hora-envio" value="08:00" style="width:100px">
+        </div>
+
+        <label>✉ MENSAJE 1 — RECORDATORIO</label>
+        <textarea id="cfg-msg-1" rows="3" placeholder="Hola {nombre}, se acerca su fecha de pago..."></textarea>
+        <label>✉ MENSAJE 2 — PAGO HOY</label>
+        <textarea id="cfg-msg-2" rows="3" placeholder="Hola {nombre}, hoy corresponde su cuota de ${cuota}..."></textarea>
+        <label>✉ MENSAJE 3 — ATRASADO</label>
+        <textarea id="cfg-msg-3" rows="3" placeholder="Estimado {nombre}, su cuenta tiene saldo pendiente..."></textarea>
+        <label>✉ MENSAJE 4 — CONFIRMACIÓN DE PAGO</label>
+        <textarea id="cfg-msg-4" rows="3" placeholder="✅ Hola {nombre}, confirmamos su pago de ${monto}..."></textarea>
+        <div style="background:#F2F2F7;border-radius:10px;padding:10px;margin-top:8px;font-size:11px;color:#888">
+            Variables: <b>{nombre}</b> <b>{saldo}</b> <b>{cuota}</b> <b>{fecha}</b> <b>{monto}</b>
+        </div>
+
+        <button class="btn-m" onclick="probarNotifAhora()">👁 VER PANEL AHORA</button>
+        <button class="btn-m" style="background:#333" onclick="guardarConfigNotif()">💾 GUARDAR CONFIG</button>
+        <button class="btn-m" style="background:none;color:#888" onclick="closeM()">CERRAR</button>
+    </div>
+</div>
+
+<!-- PANEL NOTIFICACIONES -->
+<div id="notif-overlay">
+    <div id="notif-box">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
+            <div>
+                <div style="font-size:16px;font-weight:900">🔔 COBROS PENDIENTES</div>
+                <div id="notif-subtitle" style="font-size:11px;color:#888;font-weight:700;margin-top:2px"></div>
+            </div>
+            <button onclick="cerrarNotif()" style="background:#eee;border:none;border-radius:10px;padding:8px 12px;font-weight:800;font-size:12px;cursor:pointer;">✕</button>
+        </div>
+        <div id="notif-lista"></div>
+        <button class="btn-m" style="background:#25D366;margin-top:10px" onclick="enviarEnSecuencia()">📲 ENVIAR EN SECUENCIA</button>
+        <button class="btn-m" style="background:none;color:#888" onclick="cerrarNotif()">CERRAR</button>
     </div>
 </div>
 
@@ -442,267 +502,296 @@ input:checked + .slider:before { transform:translateX(22px); }
     </div>
 </div>
 
-<!-- RECIBO OFF-SCREEN -->
+<!-- RECIBO VISUAL (off-screen para html2canvas) -->
 <div id="recibo-visual">
-    <div class="rv-header"><div class="rv-logo">SAM</div><div class="rv-sub">COMPROBANTE DE PAGO</div></div>
-    <div class="rv-line"></div>
+    <div class="rv-header">
+        <div class="rv-logo">SAM</div>
+        <div class="rv-sub">SISTEMA DE COBRANZA</div>
+    </div>
+    <div style="height:2px;background:linear-gradient(90deg,transparent,#FF7A00,transparent)"></div>
     <div class="rv-body">
-        <div class="rv-title">DETALLE DEL PAGO</div>
-        <div class="rv-row"><span>Cobrador:</span><b id="r-cobrador">---</b></div>
+        <div class="rv-title">COMPROBANTE DE PAGO</div>
+        <div class="rv-monto">
+            <div class="rv-monto-lbl">MONTO PAGADO</div>
+            <div class="rv-monto-val" id="r-monto">$ 0.00</div>
+        </div>
         <div class="rv-row"><span>Cliente:</span><b id="r-cliente">---</b></div>
-        <div class="rv-row"><span>Producto / Guía:</span><b id="r-prod">---</b></div>
+        <div class="rv-row"><span>Producto:</span><b id="r-prod">---</b></div>
+        <div class="rv-row"><span>Cobrador:</span><b id="r-cobrador">---</b></div>
         <div class="rv-row"><span>Fecha:</span><b id="r-fecha">---</b></div>
         <div class="rv-row"><span>Hora:</span><b id="r-hora">---</b></div>
         <div class="rv-row"><span>N° Comprobante:</span><b id="r-num">---</b></div>
-        <div class="rv-monto"><div class="rv-monto-lbl">MONTO PAGADO</div><div class="rv-monto-val" id="r-monto">$ 0.00</div></div>
-        <div class="rv-saldo"><div class="rv-saldo-lbl">SALDO PENDIENTE</div><div class="rv-saldo-val" id="r-saldo">$ 0.00</div></div>
+        <div class="rv-saldo">
+            <div class="rv-saldo-lbl">SALDO PENDIENTE</div>
+            <div class="rv-saldo-val" id="r-saldo">$ 0.00</div>
+        </div>
     </div>
-    <div class="rv-footer">SISTEMA SAM · GESTIÓN DE COBRANZA · GRACIAS POR SU PAGO</div>
+    <div class="rv-footer">SAM SISTEMA TOTAL · BETA · COMPROBANTE DIGITAL</div>
 </div>
 
+<!-- TOAST -->
 <div id="toast"></div>
+
 <script>
 // ══════════════════════════════════════════════════════
 // FIREBASE
 // ══════════════════════════════════════════════════════
-const firebaseConfig={apiKey:"AIzaSyCMsogo0q4Dnfekl8yo1L3lNX5Nq4uDSCE",authDomain:"samsow-ec106.firebaseapp.com",projectId:"samsow-ec106",appId:"1:357978468958:web:aae1c84c9e84744e5f3acf"};
+const firebaseConfig = {
+    apiKey: "AIzaSyCMsogo0q4Dnfekl8yo1L3lNX5Nq4uDSCE",
+    authDomain: "samsow-ec106.firebaseapp.com",
+    projectId: "samsow-ec106",
+    storageBucket: "samsow-ec106.appspot.com",
+    messagingSenderId: "357978468958",
+    appId: "1:357978468958:web:aae1c84c9e84744e5f3acf"
+};
 firebase.initializeApp(firebaseConfig);
-const db=firebase.firestore();
+const db = firebase.firestore();
 
 // ══════════════════════════════════════════════════════
 // ESTADO GLOBAL
 // ══════════════════════════════════════════════════════
-let uSesion=null,cliActivo=null,abonoActivo=null,abonoActivoIdx=-1;
-let todosClientes=[],uActivoAdmin=null,comprobanteActual=null;
-let pinMaster=localStorage.getItem('sam_pin_master')||'1234';
-let modoPin='cobrador',pinActual='';
-let _previoCount=0;
+let uSesion = null;
+let todosClientes = [];
+let cliActivo = null;
+let abonoActivoIdx = null;
+let abonoActivoData = null;
+let comprobanteActual = null;
+let pinMaster = '1234';
+let esAdmin = false;
+let _previoCount = 0;
+let _prodCount = 0;
 
 // ══════════════════════════════════════════════════════
 // UTILIDADES
 // ══════════════════════════════════════════════════════
-function mostrarToast(msg,dur=2500){
-    const t=document.getElementById('toast');
-    t.innerText=msg;t.classList.add('show');
-    clearTimeout(t._t);t._t=setTimeout(()=>t.classList.remove('show'),dur);
-}
-function openM(id){document.getElementById(id).style.display='flex';}
-function closeM(){document.querySelectorAll('.modal').forEach(m=>m.style.display='none');}
-const sj=o=>JSON.stringify(o).replace(/'/g,"&#39;");
+function sj(o){ return JSON.stringify(o).replace(/'/g,"&#39;"); }
 
-function saveCfg(obj){Object.entries(obj).forEach(([k,v])=>localStorage.setItem('sam_cfg_'+k,v));}
-function getCfg(k,d){const v=localStorage.getItem('sam_cfg_'+k);return v!==null?v:d;}
-function loadCfg(){
-    return{
-        diasRecuerdo:parseInt(getCfg('diasRecuerdo','2')),
-        diasAtraso:parseInt(getCfg('diasAtraso','1')),
-        modoNotif:getCfg('modoNotif','preguntar'),
-        horaEnvio:getCfg('horaEnvio','08:00'),
-        swActivo:getCfg('swActivo','false')==='true',
-        msg1:getCfg('msg1','Hola {nombre}, le recordamos cordialmente que se acerca su próxima fecha de pago el {fecha}. Su saldo actual es ${saldo}. ¡Gracias por su atención!'),
-        msg2:getCfg('msg2','Hola {nombre}, le recordamos que el día de hoy corresponde realizar su abono de ${cuota}. Estaremos atentos para ayudarle. ¡Gracias!'),
-        msg3:getCfg('msg3','Estimado(a) {nombre}, notamos que su cuenta presenta un saldo pendiente de ${saldo}. Le pedimos ponerse al día para evitar inconvenientes. Quedamos a su disposición.'),
-        msg4:getCfg('msg4','✅ Hola {nombre}, confirmamos recepción de su pago de ${monto}. Su saldo actual es ${saldo}. ¡Gracias por su puntualidad!')
+function mostrarToast(msg, dur=2500){
+    const t = document.getElementById('toast');
+    t.innerText = msg;
+    t.classList.add('show');
+    setTimeout(()=>t.classList.remove('show'), dur);
+}
+
+function openM(id){
+    const m = document.getElementById(id);
+    if(m){ m.style.display='flex'; setTimeout(()=>m.scrollTop=0, 50); }
+}
+function closeM(){
+    document.querySelectorAll('.modal').forEach(m=>m.style.display='none');
+}
+
+function getCfg(key, def=''){
+    return localStorage.getItem('sam_cfg_'+key) || def;
+}
+function saveCfg(key, val){
+    localStorage.setItem('sam_cfg_'+key, val);
+}
+function loadCfgNotif(){
+    return {
+        diasRecuerdo: parseInt(getCfg('diasRecuerdo','2')),
+        diasAtraso:   parseInt(getCfg('diasAtraso','1')),
+        modoNotif:    getCfg('modoNotif','preguntar'),
+        horaEnvio:    getCfg('horaEnvio','08:00'),
+        swActivo:     getCfg('swActivo','false')==='true',
+        msg1: getCfg('msg1',''),
+        msg2: getCfg('msg2',''),
+        msg3: getCfg('msg3',''),
+        msg4: getCfg('msg4','')
     };
 }
-function getSoporteNum(){return localStorage.getItem('sam_sop_num')||'';}
-function getSoportePref(){return localStorage.getItem('sam_sop_pref')||'593';}
+function saveCfgNotif(o){
+    Object.keys(o).forEach(k => saveCfg(k, o[k]));
+}
+function getSoporteNum(){ return localStorage.getItem('sam_sop_num')||''; }
+function getSoportePref(){ return localStorage.getItem('sam_sop_pref')||'593'; }
 
 // ══════════════════════════════════════════════════════
-// FIREBASE CARGA INICIAL
+// CARGA FIREBASE
 // ══════════════════════════════════════════════════════
 function cargarFirebase(){
-    const b=document.getElementById('loading-bar');
-    if(b){
-        setTimeout(()=>b.style.width='30%',100);
-        setTimeout(()=>b.style.width='70%',400);
-        setTimeout(()=>b.style.width='100%',800);
-        setTimeout(()=>{
-            const t=document.getElementById('loading-txt');
-            if(t)t.innerText='Toca SAM para ingresar';
-        },1000);
-    }
-    // Cargar mensajes guardados en config notif
-    const cfg=loadCfg();
-    ['1','2','3','4'].forEach(i=>{
-        const el=document.getElementById('cfg-msg-'+i);
-        if(el)el.value=cfg['msg'+i];
-    });
+    document.getElementById('keypad-box').style.display = 'grid';
+    const s = localStorage.getItem('sam_pin_master');
+    if(s) pinMaster = s;
 }
 
 // ══════════════════════════════════════════════════════
-// SPLASH
+// TECLADO PIN
 // ══════════════════════════════════════════════════════
-document.getElementById('logo-tap').addEventListener('click',()=>abrirTeclado(false));
-document.getElementById('logo-tap').addEventListener('touchend',e=>{e.preventDefault();abrirTeclado(false);});
-document.querySelectorAll('.modal').forEach(m=>m.addEventListener('click',function(e){if(e.target===this)closeM();}));
+let pinIngresado = '';
+let modoAdmin = false;
 
-// Triple toque zona admin invisible
-(function(){
-    let toques=0,timer=null;
-    const zona=document.getElementById('zona-admin');
-    function registrarToque(e){
-        e.preventDefault();
-        toques++;
-        clearTimeout(timer);
-        if(toques>=3){toques=0;abrirTeclado(true);return;}
-        timer=setTimeout(()=>{toques=0;},600);
-    }
-    zona.addEventListener('click',registrarToque);
-    zona.addEventListener('touchend',registrarToque);
-})();
-
-// ══════════════════════════════════════════════════════
-// PIN
-// ══════════════════════════════════════════════════════
-function abrirTeclado(esAdmin){
-    modoPin=esAdmin?'admin':'cobrador';
-    pinActual='';
-    document.getElementById('pin-dots').innerText='';
-    document.getElementById('mode-text').innerText=esAdmin?'⚙ ADMINISTRADOR':'ACCESO COBRADOR';
-    document.getElementById('keypad-box').style.display='flex';
-    document.getElementById('loading-txt').style.display='none';
-    document.getElementById('loading-bar').style.display='none';
+function abrirTeclado(admin=false){
+    modoAdmin = admin;
+    pinIngresado = '';
+    document.getElementById('pin-display').innerText = '----';
+    document.getElementById('splash-msg').innerText = admin ? '🔐 PIN ADMINISTRADOR' : '';
+    document.getElementById('keypad-box').style.display = 'grid';
 }
+
 function teclear(n){
-    if(n==='C')pinActual=pinActual.slice(0,-1);
-    else if(pinActual.length<4)pinActual+=String(n);
-    document.getElementById('pin-dots').innerText='●'.repeat(pinActual.length)||'';
+    if(n === '⌫'){
+        pinIngresado = pinIngresado.slice(0,-1);
+    } else {
+        if(pinIngresado.length >= 4) return;
+        pinIngresado += n;
+    }
+    const disp = pinIngresado.replace(/./g,'●') + '----'.slice(pinIngresado.length);
+    document.getElementById('pin-display').innerText = disp;
+    if(pinIngresado.length === 4) setTimeout(validar, 200);
 }
-async function validar(){
-    if(modoPin==='admin'){
-        if(pinActual===pinMaster){iniciarAdmin();return;}
-        mostrarToast('PIN incorrecto');
-        pinActual='';document.getElementById('pin-dots').innerText='';
+
+function validar(){
+    if(modoAdmin){
+        if(pinIngresado === pinMaster){
+            document.getElementById('screen-splash').style.display = 'none';
+            document.getElementById('p-admin').style.display = 'block';
+            cargarUsuariosAdmin();
+            const sn = getSoporteNum();
+            if(sn){
+                document.getElementById('admin-soporte-num').value = sn;
+                document.getElementById('admin-soporte-pref').value = getSoportePref();
+                document.getElementById('soporte-num-actual').innerText = '+'+getSoportePref()+' '+sn;
+            }
+        } else {
+            document.getElementById('splash-msg').innerText = '❌ PIN incorrecto';
+            pinIngresado = '';
+            document.getElementById('pin-display').innerText = '----';
+        }
         return;
     }
-    mostrarToast('Verificando...',1500);
-    const hoy=new Date().toISOString().split('T')[0];
-    try{
-        const snap=await db.collection('usuarios').where('pin','==',pinActual).where('status','==','activo').get();
-        if(!snap.empty){
-            const doc=snap.docs[0];
-            const u={...doc.data(),id:doc.id};
-            if(u.vence&&hoy>u.vence){mostrarToast('Acceso expirado');return;}
-            uSesion=u;
-            iniciarCobrador();return;
-        }
-        mostrarToast('PIN incorrecto');
-        pinActual='';document.getElementById('pin-dots').innerText='';
-    }catch(e){mostrarToast('Error de conexión');}
+    // Cobrador
+    db.collection('usuarios')
+        .where('pin','==',pinIngresado)
+        .where('status','==','activo')
+        .get()
+        .then(snap=>{
+            if(snap.empty){
+                document.getElementById('splash-msg').innerText = '❌ PIN incorrecto o inactivo';
+                pinIngresado = '';
+                document.getElementById('pin-display').innerText = '----';
+                return;
+            }
+            const doc = snap.docs[0];
+            const u = doc.data();
+            const hoy = new Date().toISOString().split('T')[0];
+            if(u.vence && u.vence < hoy){
+                document.getElementById('splash-msg').innerText = '⛔ Acceso vencido';
+                return;
+            }
+            uSesion = { id:doc.id, ...u };
+            iniciarCobrador();
+        })
+        .catch(e=>{
+            document.getElementById('splash-msg').innerText = 'Error: '+e.message;
+        });
 }
 
 // ══════════════════════════════════════════════════════
-// ADMIN
+// ADMIN — USUARIOS
 // ══════════════════════════════════════════════════════
-function iniciarAdmin(){
-    document.getElementById('screen-splash').style.display='none';
-    document.getElementById('p-admin').style.display='block';
-    cargarUsuariosAdmin();
-    cargarEstadisticasAdmin();
-    document.getElementById('sop-num').value=getSoporteNum();
-    document.getElementById('sop-pref').value=getSoportePref();
-}
-function cargarEstadisticasAdmin(){
-    db.collection('clientes').onSnapshot(snap=>{
-        let total=0,n=0;
-        snap.forEach(d=>{total+=d.data().saldo||0;n++;});
-        document.getElementById('adm-total').innerText='$'+total.toFixed(0);
-        document.getElementById('adm-nclientes').innerText=n;
-    });
-}
 function cargarUsuariosAdmin(){
     db.collection('usuarios').onSnapshot(snap=>{
-        let h='';
+        let h = '';
         snap.forEach(doc=>{
-            const u={...doc.data(),id:doc.id};
-            h+=`<div class="u-card" onclick='abrirEdicionU(${sj(u)})'>
-                <div style="display:flex;align-items:center">
-                    <span class="status-dot" style="background:${u.status==='activo'?'var(--green)':'var(--red)'}"></span>
-                    <div><b>${u.nombre}</b><br><small style="color:#aaa">PIN: ${u.pin} · ${u.vence||'Sin vencimiento'}</small></div>
+            const u = doc.data();
+            const hoy = new Date().toISOString().split('T')[0];
+            const vencido = u.vence && u.vence < hoy;
+            h += `<div style="display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:1px solid #f0f0f0;">
+                <div>
+                    <b style="font-size:13px">${u.nombre}</b>
+                    <div style="font-size:10px;color:${vencido?'var(--red)':'#aaa'}">${u.status||'activo'} · vence ${u.vence||'---'}</div>
                 </div>
-                <span style="font-size:11px;color:#aaa">${u.status}</span>
+                <button onclick='abrirEdicionU(${sj({id:doc.id,...u})})' style="background:#333;color:#fff;border:none;border-radius:8px;padding:7px 12px;font-size:10px;font-weight:800;cursor:pointer;">EDITAR</button>
             </div>`;
         });
-        document.getElementById('lista-usuarios-admin').innerHTML=h||'<p style="color:#bbb;font-size:12px;text-align:center;padding:10px">Sin cobradores</p>';
+        document.getElementById('lista-usuarios').innerHTML = h || '<p style="color:#bbb;font-size:12px;text-align:center">Sin cobradores aún.</p>';
     });
 }
-async function crearUsuario(){
-    const nom=document.getElementById('nu-nom').value.trim();
-    const pin=document.getElementById('nu-pin').value;
-    const vence=document.getElementById('nu-vence').value;
-    if(!nom||!pin){mostrarToast('Completa nombre y PIN');return;}
-    await db.collection('usuarios').add({nombre:nom,pin,vence,status:'activo'});
-    mostrarToast('✅ Cobrador creado');closeM();
-    ['nu-nom','nu-pin','nu-vence'].forEach(id=>document.getElementById(id).value='');
+
+function crearUsuario(){
+    const nom = document.getElementById('nu-nom').value.trim();
+    const pin = document.getElementById('nu-pin').value.trim();
+    const vence = document.getElementById('nu-vence').value;
+    if(!nom||!pin){ mostrarToast('Completa nombre y PIN'); return; }
+    db.collection('usuarios').add({ nombre:nom, pin, vence, status:'activo' })
+    .then(()=>{ mostrarToast('✅ Cobrador creado'); closeM(); })
+    .catch(e=>mostrarToast('Error: '+e.message));
 }
+
+let uEditandoId = null;
 function abrirEdicionU(u){
-    uActivoAdmin=u;
-    document.getElementById('ed-u-nom').value=u.nombre;
-    document.getElementById('ed-u-pin').value=u.pin;
-    document.getElementById('ed-u-status').value=u.status;
-    document.getElementById('ed-u-vence').value=u.vence||'';
-    openM('m-edit-u');
+    uEditandoId = u.id;
+    document.getElementById('eu-nom').value = u.nombre||'';
+    document.getElementById('eu-pin').value = u.pin||'';
+    document.getElementById('eu-vence').value = u.vence||'';
+    document.getElementById('eu-status').value = u.status||'activo';
+    openM('m-editar-usuario');
 }
-async function actualizarUsuario(){
-    if(!uActivoAdmin)return;
-    await db.collection('usuarios').doc(uActivoAdmin.id).update({
-        nombre:document.getElementById('ed-u-nom').value,
-        pin:document.getElementById('ed-u-pin').value,
-        status:document.getElementById('ed-u-status').value,
-        vence:document.getElementById('ed-u-vence').value
-    });
-    mostrarToast('✅ Cobrador actualizado');closeM();
+function actualizarUsuario(){
+    if(!uEditandoId) return;
+    db.collection('usuarios').doc(uEditandoId).update({
+        nombre: document.getElementById('eu-nom').value.trim(),
+        pin:    document.getElementById('eu-pin').value.trim(),
+        vence:  document.getElementById('eu-vence').value,
+        status: document.getElementById('eu-status').value
+    })
+    .then(()=>{ mostrarToast('✅ Cobrador actualizado'); closeM(); })
+    .catch(e=>mostrarToast('Error: '+e.message));
 }
-async function eliminarUsuario(){
-    if(!uActivoAdmin)return;
-    if(!confirm('¿Eliminar a '+uActivoAdmin.nombre+'?'))return;
-    await db.collection('usuarios').doc(uActivoAdmin.id).delete();
-    mostrarToast('Cobrador eliminado');closeM();
+function eliminarUsuario(){
+    if(!uEditandoId||!confirm('¿Eliminar este cobrador?')) return;
+    db.collection('usuarios').doc(uEditandoId).delete()
+    .then(()=>{ mostrarToast('Cobrador eliminado'); closeM(); });
 }
-function guardarSoporte(){
-    localStorage.setItem('sam_sop_num',document.getElementById('sop-num').value);
-    localStorage.setItem('sam_sop_pref',document.getElementById('sop-pref').value);
+
+// ══════════════════════════════════════════════════════
+// ADMIN — SOPORTE Y PIN
+// ══════════════════════════════════════════════════════
+function guardarNumSoporte(){
+    const num = document.getElementById('admin-soporte-num').value.trim();
+    const pref = document.getElementById('admin-soporte-pref').value;
+    if(!num){ mostrarToast('Ingresa un número'); return; }
+    localStorage.setItem('sam_sop_num', num);
+    localStorage.setItem('sam_sop_pref', pref);
+    document.getElementById('soporte-num-actual').innerText = '+'+pref+' '+num;
     mostrarToast('✅ Número guardado');
 }
+
 function cambiarPinMaster(){
-    const act=document.getElementById('pin-act').value;
-    const nvo=document.getElementById('pin-nvo').value;
-    const conf=document.getElementById('pin-conf').value;
-    if(act!==pinMaster){mostrarToast('PIN actual incorrecto');return;}
-    if(nvo.length<4){mostrarToast('El PIN debe tener 4 dígitos');return;}
-    if(nvo!==conf){mostrarToast('Los PINes no coinciden');return;}
-    pinMaster=nvo;
-    localStorage.setItem('sam_pin_master',nvo);
-    mostrarToast('✅ PIN actualizado');
-    ['pin-act','pin-nvo','pin-conf'].forEach(id=>document.getElementById(id).value='');
+    const np = document.getElementById('admin-nuevo-pin').value.trim();
+    if(!np||np.length<4){ mostrarToast('PIN debe tener 4 dígitos'); return; }
+    pinMaster = np;
+    localStorage.setItem('sam_pin_master', np);
+    document.getElementById('admin-nuevo-pin').value = '';
+    mostrarToast('✅ PIN admin actualizado');
 }
 // ══════════════════════════════════════════════════════
 // COBRADOR
 // ══════════════════════════════════════════════════════
 function iniciarCobrador(){
-    document.getElementById('screen-splash').style.display='none';
-    document.getElementById('p-user').style.display='block';
-    document.getElementById('nom-u-nav').innerHTML=uSesion.nombre+' <span id="wakelock-dot"></span>';
-    if(getSoporteNum())document.getElementById('btn-soporte-cobrador').style.display='flex';
-    const cfg=loadCfg();
-    document.getElementById('cfg-sw-activo').checked=cfg.swActivo;
-    document.getElementById('cfg-dias-recuerdo').value=cfg.diasRecuerdo;
-    document.getElementById('cfg-dias-atraso').value=cfg.diasAtraso;
-    document.getElementById('cfg-modo-notif').value=cfg.modoNotif;
-    document.getElementById('cfg-hora-envio').value=cfg.horaEnvio;
-    document.getElementById('cfg-msg-1').value=cfg.msg1;
-    document.getElementById('cfg-msg-2').value=cfg.msg2;
-    document.getElementById('cfg-msg-3').value=cfg.msg3;
-    document.getElementById('cfg-msg-4').value=cfg.msg4;
+    document.getElementById('screen-splash').style.display = 'none';
+    document.getElementById('p-user').style.display = 'block';
+    document.getElementById('nom-u-nav').innerHTML = uSesion.nombre + ' <span id="wakelock-dot"></span>';
+    if(getSoporteNum()) document.getElementById('btn-soporte-cobrador').style.display = 'flex';
+    const cfg = loadCfgNotif();
+    document.getElementById('cfg-sw-activo').checked = cfg.swActivo;
+    document.getElementById('cfg-dias-recuerdo').value = cfg.diasRecuerdo;
+    document.getElementById('cfg-dias-atraso').value = cfg.diasAtraso;
+    document.getElementById('cfg-hora-envio').value = cfg.horaEnvio;
+    document.getElementById('cfg-msg-1').value = cfg.msg1;
+    document.getElementById('cfg-msg-2').value = cfg.msg2;
+    document.getElementById('cfg-msg-3').value = cfg.msg3;
+    document.getElementById('cfg-msg-4').value = cfg.msg4;
     cargarClientes();
     iniciarCronometro();
     activarWakeLock();
-    if(cfg.swActivo)programarNotifDiaria();
+    programarNotifDiaria();
 }
+
 function abrirSoporte(){
-    const num=getSoporteNum(),pref=getSoportePref();
-    if(num)window.open(`https://wa.me/${pref}${num}`,'_blank');
+    const num = getSoporteNum(), pref = getSoportePref();
+    if(num) window.open(`https://wa.me/${pref}${num}`, '_blank');
 }
 
 // ══════════════════════════════════════════════════════
@@ -710,577 +799,874 @@ function abrirSoporte(){
 // ══════════════════════════════════════════════════════
 function cargarClientes(){
     db.collection('clientes').where('creadoPor','==',uSesion.nombre).onSnapshot(snap=>{
-        todosClientes=[];let total=0;
-        snap.forEach(doc=>{const c={...doc.data(),id:doc.id};todosClientes.push(c);total+=c.saldo||0;});
-        document.getElementById('u-total').innerText=`$ ${total.toFixed(2)}`;
-        document.getElementById('u-count').innerText=`${todosClientes.length} clientes`;
+        todosClientes = [];
+        let total = 0;
+        snap.forEach(doc=>{
+            const c = { ...doc.data(), id:doc.id };
+            todosClientes.push(c);
+            total += parseFloat(c.saldo)||0;
+        });
+        document.getElementById('u-total').innerText = `$ ${total.toFixed(2)}`;
+        const hoy = new Date().toISOString().split('T')[0];
+        const atras = todosClientes.filter(c=>c.saldo>0&&c.fechaCobro&&c.fechaCobro<hoy).length;
+        const hoyN  = todosClientes.filter(c=>c.saldo>0&&c.fechaCobro===hoy).length;
+        document.getElementById('resumen-estados').innerText = [
+            hoyN  ? hoyN+' pagan hoy'   : '',
+            atras ? atras+' atrasados' : ''
+        ].filter(Boolean).join(' · ');
         renderClientes(todosClientes);
-        verificarNotifAlAbrir();
+        // Notificaciones: atrasados siempre, resto si sw activo
+        if(!window._notifChecked){
+            window._notifChecked = true;
+            setTimeout(()=>{
+                const g = calcularGruposNotif();
+                if(g.atrasado.length > 0) mostrarPanelNotif(g);
+                else if(getCfg('swActivo','false')==='true' && (g.hoy.length>0||g.recuerdo.length>0)) mostrarPanelNotif(g);
+            }, 1200);
+        }
     });
 }
+
 function renderClientes(lista){
-    const hoy=new Date().toISOString().split('T')[0];
-    let h='';
+    const hoy = new Date().toISOString().split('T')[0];
+    let h = '';
     lista.forEach(c=>{
-        let color='var(--green)';
-        if(c.saldo>0&&c.fechaCobro&&c.fechaCobro<hoy)color='var(--red)';
-        else if(c.saldo>0&&c.fechaCobro&&c.fechaCobro===hoy)color='#FF9500';
-        h+=`<div class="card" onclick='abrirFicha(${sj(c)})'>
-            <div style="display:flex;align-items:center">
+        let color = 'var(--green)';
+        if(c.saldo>0 && c.fechaCobro && c.fechaCobro < hoy)  color = 'var(--red)';
+        else if(c.saldo>0 && c.fechaCobro && c.fechaCobro === hoy) color = '#FF9500';
+        const prodTxt = c.productos&&c.productos.length
+            ? c.productos.map(p=>p.nombre).join(', ')
+            : (c.prod||'General');
+        h += `<div class="card" onclick='abrirFicha(${sj(c)})'>
+            <div style="display:flex;align-items:center;flex:1;min-width:0">
                 <span class="status-dot" style="background:${color}"></span>
-                <div>
-                    <b>${c.nombre}</b><br>
-                    <small style="color:#999">${c.prod||'General'} · ${c.frecuencia||''}</small>
+                <div style="min-width:0">
+                    <b style="font-size:14px">${c.nombre}</b>
+                    <div style="font-size:11px;color:#999;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:180px">${prodTxt}</div>
                 </div>
             </div>
-            <div style="text-align:right">
-                <b style="font-size:15px">$${(c.saldo||0).toFixed(2)}</b>
+            <div style="text-align:right;flex-shrink:0;margin-left:10px">
+                <b style="font-size:15px">$${parseFloat(c.saldo||0).toFixed(2)}</b>
                 ${c.cuota?`<br><small style="color:#aaa">$${parseFloat(c.cuota).toFixed(2)}/cuota</small>`:''}
             </div>
         </div>`;
     });
-    document.getElementById('lista-cli').innerHTML=h||'<p style="text-align:center;color:#bbb;padding:30px">Sin clientes aún.<br>Toca + para agregar.</p>';
+    document.getElementById('lista-clientes').innerHTML = h ||
+        '<p style="text-align:center;color:#bbb;padding:40px 20px">Sin clientes aún.<br>Toca <b style="color:var(--accent)">+</b> para agregar.</p>';
 }
-function filtrarCli(){
-    const q=document.getElementById('buscar').value.toLowerCase();
+
+function filtrarClientes(){
+    const q = document.getElementById('buscar-cli').value.toLowerCase();
     renderClientes(todosClientes.filter(c=>(c.nombre||'').toLowerCase().includes(q)));
 }
+
 function abrirFicha(c){
-    cliActivo=c;
-    document.getElementById('det-nom').innerText=c.nombre;
-    document.getElementById('det-prod').innerText=c.prod||'';
-    document.getElementById('det-fentrada').innerText=c.fechaEntrada||'---';
-    document.getElementById('det-fcobro').innerText=c.fechaCobro||'---';
-    document.getElementById('det-dir').innerText=c.direccion||'---';
-    document.getElementById('det-frec').innerText=c.frecuencia||'---';
-    document.getElementById('det-cuota').innerText=c.cuota?`$ ${parseFloat(c.cuota).toFixed(2)}`:'---';
-    document.getElementById('det-saldo').innerText=`$ ${(c.saldo||0).toFixed(2)}`;
-    renderHistorial(c);
-    openM('m-det-cli');
+    cliActivo = c;
+    document.getElementById('det-cli-nom').innerText = c.nombre;
+    document.getElementById('det-cli-fentrada').innerText = c.fechaEntrada||'---';
+    document.getElementById('det-cli-fcobro').innerText = c.fechaCobro||'---';
+    // Mostrar productos con precios
+    if(c.productos && c.productos.length){
+        const prodTxt = c.productos.map(p=>p.nombre+(p.precio?` $${parseFloat(p.precio).toFixed(2)}`:'')).join(' · ');
+        document.getElementById('det-cli-prod').innerText = prodTxt;
+    } else {
+        document.getElementById('det-cli-prod').innerText = c.prod||'---';
+    }
+    document.getElementById('det-cli-dir').innerText = c.direccion||'---';
+    document.getElementById('det-cli-frec').innerText = c.frecuencia||'---';
+    document.getElementById('det-cli-cuota').innerText = c.cuota ? `$ ${parseFloat(c.cuota).toFixed(2)}` : '---';
+    document.getElementById('det-cli-saldo').innerText = `$ ${parseFloat(c.saldo||0).toFixed(2)}`;
+    renderizarHistorial(c);
+    renderizarCalendario(c);
+    openM('m-det-cliente');
 }
-function renderHistorial(c){
-    const hist=(c.historial||[]).slice().reverse();
+
+function renderizarHistorial(c){
+    const hist = (c.historial||[]).slice().reverse();
     if(!hist.length){
-        document.getElementById('det-hist').innerHTML='<p style="font-size:12px;color:#bbb;text-align:center;padding:10px">Sin movimientos aún.</p>';
+        document.getElementById('det-cli-hist').innerHTML =
+            '<p style="font-size:12px;color:#bbb;text-align:center;padding:10px">Sin movimientos aún.</p>';
         return;
     }
-    let h='';
+    let h = '';
     hist.forEach((p,i)=>{
-        const realIdx=(c.historial||[]).length-1-i;
-        const num=p.numComp||('SAM-'+c.id.slice(-6).toUpperCase()+i);
-        const editTag=p.editado?` <span style="color:#FF9500;font-size:9px">✏ editado</span>`:'';
-        const previoTag=p.esPrevio?` <span style="color:#007AFF;font-size:9px">📋 previo al sistema</span>`:'';
-        h+=`<div class="hist-item" onclick='abrirDetalleAbono(${sj(p)},${realIdx},${sj(c)})'>
+        const realIdx = (c.historial||[]).length - 1 - i;
+        const num = p.numComp || ('SAM-'+c.id.slice(-6).toUpperCase()+i);
+        const editTag   = p.editado  ? ` <span style="color:#FF9500;font-size:9px">✏ editado</span>` : '';
+        const previoTag = p.esPrevio ? ` <span style="color:#007AFF;font-size:9px">📋 previo</span>` : '';
+        h += `<div class="hist-item" onclick='abrirDetalleAbono(${sj(p)},${realIdx},${sj(c)})'>
             <div style="flex:1;min-width:0">
                 <b style="font-size:13px">${p.fecha}${p.hora&&p.hora!='--:--'?' · '+p.hora:''}</b>${editTag}${previoTag}
-                <div class="hist-hint">${p.esPrevio?'📋 pago previo al sistema':'📄 '+num+' · toca para ver / editar'}</div>
+                <div class="hist-hint">${p.esPrevio?'📋 pago previo al sistema':'📄 '+num+' · toca para ver/editar'}</div>
             </div>
             <b style="font-size:14px;color:var(--green);margin-left:8px;white-space:nowrap">+$ ${parseFloat(p.monto).toFixed(2)}</b>
         </div>`;
     });
-    document.getElementById('det-hist').innerHTML=h;
+    document.getElementById('det-cli-hist').innerHTML = h;
 }
-function usarCuota(){
-    if(cliActivo&&cliActivo.cuota)
-        document.getElementById('input-abono').value=parseFloat(cliActivo.cuota).toFixed(2);
+
+// ══════════════════════════════════════════════════════
+// CALENDARIO DE COBROS
+// ══════════════════════════════════════════════════════
+function renderizarCalendario(c){
+    const box = document.getElementById('det-cli-calendario');
+    if(!box) return;
+    if(!c.fechaCobro || !c.cuota){
+        box.innerHTML = '<p style="font-size:11px;color:#bbb;text-align:center;padding:8px">Sin datos de cobro calculados.</p>';
+        return;
+    }
+    const cuota = parseFloat(c.cuota);
+    const hist  = (c.historial||[]).filter(p=>!p.esPrevio);
+    // Construir set de fechas ya pagadas (por fecha formateada)
+    const pagosFechas = new Set(hist.map(p=>p.fecha));
+    const frec = c.frecuencia||'Mensual';
+    const maxCuotas = c.numeroCuotas
+        ? parseInt(c.numeroCuotas)
+        : Math.ceil((parseFloat(c.saldo||0)+hist.reduce((a,p)=>a+p.monto,0))/cuota)+1;
+    // Generar fechas desde fechaCobro
+    const fechas = [];
+    let f = new Date(c.fechaCobro+'T12:00:00');
+    for(let i=0; i<Math.min(maxCuotas+2,36); i++){
+        fechas.push(new Date(f));
+        if(frec==='Diario')      f.setDate(f.getDate()+1);
+        else if(frec==='Semanal')    f.setDate(f.getDate()+7);
+        else if(frec==='Quincenal')  f.setDate(f.getDate()+15);
+        else                         f.setMonth(f.getMonth()+1);
+    }
+    const hoy = new Date().toISOString().split('T')[0];
+    let html = '';
+    fechas.forEach((fd,i)=>{
+        const fStr  = fd.toLocaleDateString('es-ES',{day:'2-digit',month:'2-digit',year:'numeric'});
+        const fISO  = fd.toISOString().split('T')[0];
+        const pagado   = pagosFechas.has(fStr);
+        const esHoy    = fISO === hoy;
+        const atrasado = !pagado && fISO < hoy;
+        let bg='#fff', colorTxt='#333', icono='⏳', badge='';
+        if(pagado){
+            bg='#F0FFF4'; colorTxt='#aaa'; icono='✅';
+            badge=`<span style="font-size:9px;background:#34C759;color:#fff;border-radius:6px;padding:2px 6px;margin-left:5px;font-weight:800">PAGADO</span>`;
+        } else if(esHoy){
+            bg='#FFF8F3'; colorTxt='#FF7A00'; icono='💰';
+            badge=`<span style="font-size:9px;background:#FF7A00;color:#fff;border-radius:6px;padding:2px 6px;margin-left:5px;font-weight:800">HOY</span>`;
+        } else if(atrasado){
+            bg='#FFF0F0'; colorTxt='var(--red)'; icono='🔴';
+            badge=`<span style="font-size:9px;background:var(--red);color:#fff;border-radius:6px;padding:2px 6px;margin-left:5px;font-weight:800">ATRASADO</span>`;
+        }
+        html += `<div style="display:flex;justify-content:space-between;align-items:center;background:${bg};border-radius:10px;padding:8px 11px;margin-bottom:5px;border:1px solid #eee;">
+            <div style="display:flex;align-items:center;gap:6px">
+                <span style="font-size:15px">${icono}</span>
+                <div>
+                    <b style="font-size:12px;color:${colorTxt}">${fStr}</b>${badge}
+                    <div style="font-size:10px;color:#aaa;font-weight:700">Cuota #${i+1}</div>
+                </div>
+            </div>
+            <b style="font-size:13px;color:${pagado?'#34C759':colorTxt}">$ ${cuota.toFixed(2)}</b>
+        </div>`;
+    });
+    box.innerHTML = html || '<p style="font-size:11px;color:#bbb;text-align:center;padding:8px">Sin fechas.</p>';
+}
+
+// ══════════════════════════════════════════════════════
+// PRODUCTOS CON PRECIOS
+// ══════════════════════════════════════════════════════
+function agregarFilaProducto(){
+    _prodCount++;
+    const id = 'prod'+_prodCount;
+    const div = document.createElement('div');
+    div.id = id;
+    div.style.cssText = 'display:flex;gap:6px;align-items:center;margin-bottom:6px;background:#fff;border-radius:12px;padding:8px 10px;border:1px solid #eee;';
+    div.innerHTML = `
+        <input type="text" class="prod-nom" placeholder="Nombre producto" list="sugerencias-prod"
+            style="flex:1;padding:9px 8px;font-size:12px;margin:0;border-radius:10px;border:1px solid #ddd;background:#f9f9f9;"
+            oninput="recalcProductos()">
+        <input type="number" class="prod-precio" placeholder="$ precio" inputmode="decimal"
+            style="width:85px;padding:9px 8px;font-size:12px;margin:0;border-radius:10px;border:1px solid #ddd;background:#f9f9f9;"
+            oninput="recalcProductos()">
+        <button onclick="eliminarFilaProducto('${id}')"
+            style="background:var(--red);color:#fff;border:none;border-radius:8px;width:28px;height:28px;font-size:14px;cursor:pointer;flex-shrink:0;padding:0;">✕</button>
+    `;
+    document.getElementById('prod-lista').appendChild(div);
+    cargarSugerenciasProductos();
+    recalcProductos();
+}
+
+function eliminarFilaProducto(id){
+    const el = document.getElementById(id);
+    if(el) el.remove();
+    recalcProductos();
+}
+
+function recalcProductos(){
+    let total = 0;
+    document.querySelectorAll('#prod-lista .prod-precio').forEach(inp=>{
+        total += parseFloat(inp.value)||0;
+    });
+    if(total > 0){
+        document.getElementById('prod-total-box').style.display = 'block';
+        document.getElementById('prod-total-val').innerText = `$ ${total.toFixed(2)}`;
+        document.getElementById('nc-tot').value = total.toFixed(2);
+        calcularCuota();
+    } else {
+        document.getElementById('prod-total-box').style.display = 'none';
+        document.getElementById('nc-tot').value = '';
+    }
+}
+
+function cargarSugerenciasProductos(){
+    if(window._sugerenciasCargadas) return;
+    window._sugerenciasCargadas = true;
+    let dl = document.getElementById('sugerencias-prod');
+    if(!dl){
+        dl = document.createElement('datalist');
+        dl.id = 'sugerencias-prod';
+        document.body.appendChild(dl);
+    }
+    db.collection('productos_catalogo')
+        .where('cobrador','==',uSesion.nombre)
+        .get()
+        .then(snap=>{
+            dl.innerHTML = '';
+            snap.forEach(doc=>{
+                const opt = document.createElement('option');
+                opt.value = doc.data().nombre;
+                dl.appendChild(opt);
+            });
+        });
 }
 
 // ══════════════════════════════════════════════════════
 // CREAR CLIENTE
 // ══════════════════════════════════════════════════════
 function calcularCuota(){
-    const tot=parseFloat(document.getElementById('nc-tot').value)||0;
-    const ini=parseFloat(document.getElementById('nc-ini').value)||0;
-    const n=parseInt(document.getElementById('nc-ncuotas').value)||0;
-    if(tot>0&&n>0){
-        document.getElementById('cuota-preview').style.display='block';
-        document.getElementById('cuota-val').innerText=`$ ${((tot-ini)/n).toFixed(2)}`;
-    }else document.getElementById('cuota-preview').style.display='none';
+    const tot = parseFloat(document.getElementById('nc-tot').value)||0;
+    const ini = parseFloat(document.getElementById('nc-ini').value)||0;
+    const n   = parseInt(document.getElementById('nc-ncuotas').value)||0;
+    if(tot>0 && n>0){
+        document.getElementById('cuota-valor').innerText = `$ ${((tot-ini)/n).toFixed(2)}`;
+        document.getElementById('cuota-preview').style.display = 'block';
+    } else {
+        document.getElementById('cuota-preview').style.display = 'none';
+    }
 }
+
 function togglePrevio(){
-    const on=document.getElementById('nc-tiene-previo').checked;
-    document.getElementById('previo-campos').style.display=on?'block':'none';
-    if(on&&document.getElementById('previo-lista-pagos').children.length===0)agregarFilaPrevio();
-    if(!on)document.getElementById('previo-resumen').style.display='none';
+    const on = document.getElementById('nc-tiene-previo').checked;
+    document.getElementById('previo-campos').style.display = on ? 'block' : 'none';
+    if(on && document.getElementById('previo-lista-pagos').children.length===0) agregarFilaPrevio();
+    if(!on) document.getElementById('previo-resumen').style.display = 'none';
 }
+
+let _previoCount2 = 0;
 function agregarFilaPrevio(){
-    _previoCount++;
-    const id='pf'+_previoCount;
-    const div=document.createElement('div');
-    div.id=id;
-    div.style.cssText='display:flex;gap:6px;align-items:center;margin-bottom:6px;background:#fff;border-radius:12px;padding:8px 10px;border:1px solid #eee;';
-    div.innerHTML=`
-        <div style="font-size:11px;font-weight:800;color:#FF7A00;min-width:20px;text-align:center">#${_previoCount}</div>
-        <input type="date" style="flex:1;padding:9px 8px;font-size:12px;margin:0;" id="${id}-fecha">
-        <input type="number" placeholder="$ monto" inputmode="decimal" style="width:90px;padding:9px 8px;font-size:12px;margin:0;" id="${id}-monto" oninput="recalcPrevio()">
-        <button onclick="eliminarFilaPrevio('${id}')" style="background:var(--red);color:#fff;border:none;border-radius:8px;width:28px;height:28px;font-size:14px;cursor:pointer;flex-shrink:0;padding:0;">✕</button>
+    _previoCount2++;
+    const id = 'pf'+_previoCount2;
+    const div = document.createElement('div');
+    div.id = id;
+    div.style.cssText = 'display:flex;gap:6px;align-items:center;margin-bottom:6px;background:#fff;border-radius:12px;padding:8px 10px;border:1px solid #eee;';
+    div.innerHTML = `
+        <div style="font-size:11px;font-weight:800;color:#FF7A00;min-width:20px;text-align:center">#${_previoCount2}</div>
+        <input type="date" style="flex:1;padding:9px 8px;font-size:12px;margin:0;border-radius:10px;border:1px solid #ddd;" id="${id}-fecha">
+        <input type="number" placeholder="$ monto" inputmode="decimal"
+            style="width:90px;padding:9px 8px;font-size:12px;margin:0;border-radius:10px;border:1px solid #ddd;"
+            id="${id}-monto" oninput="recalcPrevio()">
+        <button onclick="eliminarFilaPrevio('${id}')"
+            style="background:var(--red);color:#fff;border:none;border-radius:8px;width:28px;height:28px;font-size:14px;cursor:pointer;flex-shrink:0;padding:0;">✕</button>
     `;
     document.getElementById('previo-lista-pagos').appendChild(div);
     recalcPrevio();
 }
+
 function eliminarFilaPrevio(id){
-    const el=document.getElementById(id);
-    if(el)el.remove();
+    const el = document.getElementById(id);
+    if(el) el.remove();
     recalcPrevio();
 }
+
 function recalcPrevio(){
-    const tot=parseFloat(document.getElementById('nc-tot').value)||0;
-    const ini=parseFloat(document.getElementById('nc-ini').value)||0;
-    let totalPagado=0;
+    const tot = parseFloat(document.getElementById('nc-tot').value)||0;
+    const ini = parseFloat(document.getElementById('nc-ini').value)||0;
+    let totalPagado = 0;
     document.querySelectorAll('[id^="pf"][id$="-monto"]').forEach(inp=>{
-        totalPagado+=parseFloat(inp.value)||0;
+        totalPagado += parseFloat(inp.value)||0;
     });
-    if(!totalPagado){document.getElementById('previo-resumen').style.display='none';return;}
-    const saldo=Math.max(0,(tot-ini)-totalPagado);
-    document.getElementById('previo-pagado').innerText=`$ ${totalPagado.toFixed(2)}`;
-    document.getElementById('previo-saldo').innerText=`$ ${saldo.toFixed(2)}`;
-    document.getElementById('previo-resumen').style.display='block';
+    if(!totalPagado){ document.getElementById('previo-resumen').style.display='none'; return; }
+    const saldo = Math.max(0,(tot-ini)-totalPagado);
+    document.getElementById('previo-pagado').innerText = `$ ${totalPagado.toFixed(2)}`;
+    document.getElementById('previo-saldo').innerText  = `$ ${saldo.toFixed(2)}`;
+    document.getElementById('previo-resumen').style.display = 'block';
 }
+
 async function crearCli(){
-    const nom=document.getElementById('nc-nom').value.trim();
-    if(!nom){mostrarToast('Ingresa un nombre');return;}
-    const tot=parseFloat(document.getElementById('nc-tot').value)||0;
-    const ini=parseFloat(document.getElementById('nc-ini').value)||0;
-    const n=parseInt(document.getElementById('nc-ncuotas').value)||0;
-    const tienePrevio=document.getElementById('nc-tiene-previo').checked;
-    const cuotaVal=n>0?((tot-ini)/n):0;
-    const histInicial=[];
-    let totalPrevio=0;
+    const nom = document.getElementById('nc-nom').value.trim();
+    if(!nom){ mostrarToast('Ingresa un nombre'); return; }
+    const tot = parseFloat(document.getElementById('nc-tot').value)||0;
+    const ini = parseFloat(document.getElementById('nc-ini').value)||0;
+    const n   = parseInt(document.getElementById('nc-ncuotas').value)||0;
+    const tienePrevio = document.getElementById('nc-tiene-previo').checked;
+    const cuotaVal = n>0 ? ((tot-ini)/n) : 0;
+    // Recoger productos
+    const productosGuardados = [];
+    document.querySelectorAll('#prod-lista > div').forEach(fila=>{
+        const pnom    = (fila.querySelector('.prod-nom')||{}).value||'';
+        const pprecio = parseFloat((fila.querySelector('.prod-precio')||{}).value)||0;
+        if(pnom) productosGuardados.push({ nombre:pnom, precio:pprecio });
+    });
+    const prodTexto = productosGuardados.map(p=>p.nombre).join(', ')||'General';
+    // Guardar nombres como sugerencias en Firebase
+    productosGuardados.forEach(p=>{
+        if(p.nombre) db.collection('productos_catalogo')
+            .doc(uSesion.nombre+'_'+p.nombre.toLowerCase().replace(/\s+/g,'_'))
+            .set({ nombre:p.nombre, cobrador:uSesion.nombre },{ merge:true });
+    });
+    // Historial previo
+    const histInicial = [];
+    let totalPrevio = 0;
     if(tienePrevio){
-        const filas=document.querySelectorAll('#previo-lista-pagos > div');
+        const filas = document.querySelectorAll('#previo-lista-pagos > div');
         filas.forEach((fila,i)=>{
-            const idBase=fila.id;
-            const fechaRaw=document.getElementById(idBase+'-fecha').value;
-            const monto=parseFloat(document.getElementById(idBase+'-monto').value)||0;
-            if(monto<=0)return;
-            totalPrevio+=monto;
-            const fechaFmt=fechaRaw?new Date(fechaRaw+'T12:00:00').toLocaleDateString('es-ES',{day:'2-digit',month:'2-digit',year:'numeric'}):new Date().toLocaleDateString('es-ES',{day:'2-digit',month:'2-digit',year:'numeric'});
+            const idBase   = fila.id;
+            const fechaRaw = document.getElementById(idBase+'-fecha').value;
+            const monto    = parseFloat(document.getElementById(idBase+'-monto').value)||0;
+            if(monto<=0) return;
+            totalPrevio += monto;
+            const fechaFmt = fechaRaw
+                ? new Date(fechaRaw+'T12:00:00').toLocaleDateString('es-ES',{day:'2-digit',month:'2-digit',year:'numeric'})
+                : new Date().toLocaleDateString('es-ES',{day:'2-digit',month:'2-digit',year:'numeric'});
             histInicial.push({
-                monto:parseFloat(monto.toFixed(2)),
-                fecha:fechaFmt,
-                hora:'--:--',
-                numComp:'CUADERNO-'+(i+1),
-                saldoDespues:0,
-                editado:false,
-                esPrevio:true,
-                cuotasPagadas:i+1
+                monto: parseFloat(monto.toFixed(2)),
+                fecha: fechaFmt,
+                hora:  '--:--',
+                numComp: 'CUADERNO-'+(i+1),
+                saldoDespues: 0,
+                editado: false,
+                esPrevio: true,
+                cuotasPagadas: i+1
             });
         });
-        let acum=0;
-        for(let i=histInicial.length-1;i>=0;i--){
-            acum+=histInicial[i].monto;
-            histInicial[i].saldoDespues=parseFloat(Math.max(0,(tot-ini)-acum).toFixed(2));
+        let acum = 0;
+        for(let i=histInicial.length-1; i>=0; i--){
+            acum += histInicial[i].monto;
+            histInicial[i].saldoDespues = parseFloat(Math.max(0,(tot-ini)-acum).toFixed(2));
         }
     }
-    const saldoInicial=tienePrevio?Math.max(0,(tot-ini)-totalPrevio):(tot-ini);
-    const fechaEntrada=document.getElementById('nc-fecha').value;
-    try{
+    const saldoInicial  = tienePrevio ? Math.max(0,(tot-ini)-totalPrevio) : (tot-ini);
+    const fechaEntrada  = document.getElementById('nc-fecha').value;
+    try {
         await db.collection('clientes').add({
-            nombre:nom,
-            prod:document.getElementById('nc-prod').value,
-            prefijo:document.getElementById('nc-pref').value,
-            telefono:document.getElementById('nc-tel').value,
-            saldo:parseFloat(saldoInicial.toFixed(2)),
-            cuota:cuotaVal>0?cuotaVal.toFixed(2):null,
-            numeroCuotas:n||null,
-            direccion:document.getElementById('nc-dir').value,
-            frecuencia:document.getElementById('nc-frec').value,
-            fechaEntrada:fechaEntrada,
-            fechaCobro:fechaEntrada,
-            creadoPor:uSesion.nombre,
-            historial:histInicial
+            nombre: nom,
+            prod: prodTexto,
+            productos: productosGuardados,
+            prefijo: document.getElementById('nc-pref').value,
+            telefono: document.getElementById('nc-tel').value,
+            saldo: parseFloat(saldoInicial.toFixed(2)),
+            cuota: cuotaVal>0 ? cuotaVal.toFixed(2) : null,
+            numeroCuotas: n||null,
+            direccion: document.getElementById('nc-dir').value,
+            frecuencia: document.getElementById('nc-frec').value,
+            fechaEntrada: fechaEntrada,
+            fechaCobro: fechaEntrada,
+            creadoPor: uSesion.nombre,
+            historial: histInicial
         });
         closeM();
-        ['nc-nom','nc-prod','nc-tel','nc-tot','nc-dir','nc-fecha','nc-ncuotas'].forEach(id=>document.getElementById(id).value='');
-        document.getElementById('nc-ini').value='0';
-        document.getElementById('nc-tiene-previo').checked=false;
-        document.getElementById('previo-campos').style.display='none';
-        document.getElementById('previo-resumen').style.display='none';
-        document.getElementById('cuota-preview').style.display='none';
-        document.getElementById('previo-lista-pagos').innerHTML='';
-        _previoCount=0;
+        // Limpiar formulario
+        ['nc-nom','nc-tel','nc-tot','nc-dir','nc-fecha','nc-ncuotas'].forEach(id=>document.getElementById(id).value='');
+        document.getElementById('nc-ini').value = '0';
+        document.getElementById('nc-tiene-previo').checked = false;
+        document.getElementById('previo-campos').style.display = 'none';
+        document.getElementById('previo-resumen').style.display = 'none';
+        document.getElementById('cuota-preview').style.display = 'none';
+        document.getElementById('previo-lista-pagos').innerHTML = '';
+        document.getElementById('prod-lista').innerHTML = '';
+        document.getElementById('prod-total-box').style.display = 'none';
+        _previoCount2 = 0;
+        _prodCount = 0;
+        window._sugerenciasCargadas = false;
         mostrarToast('✅ Cliente guardado');
-    }catch(e){mostrarToast('Error: '+e.message);}
+    } catch(e){ mostrarToast('Error: '+e.message); }
 }
 
 // ══════════════════════════════════════════════════════
 // EDITAR Y ELIMINAR CLIENTE
 // ══════════════════════════════════════════════════════
+function usarCuota(){
+    if(cliActivo && cliActivo.cuota)
+        document.getElementById('input-abono').value = parseFloat(cliActivo.cuota).toFixed(2);
+}
+
 function abrirEditarCliente(){
-    const c=cliActivo;
-    document.getElementById('ec-nom').value=c.nombre||'';
-    document.getElementById('ec-prod').value=c.prod||'';
-    document.getElementById('ec-pref').value=c.prefijo||'593';
-    document.getElementById('ec-tel').value=c.telefono||'';
-    document.getElementById('ec-saldo').value=c.saldo||0;
-    document.getElementById('ec-cuota').value=c.cuota||'';
-    document.getElementById('ec-dir').value=c.direccion||'';
-    document.getElementById('ec-fentrada').value=c.fechaEntrada||'';
-    document.getElementById('ec-fecha').value=c.fechaCobro||'';
-    document.getElementById('ec-frec').value=c.frecuencia||'Mensual';
-    closeM();setTimeout(()=>openM('m-editar-cliente'),200);
+    const c = cliActivo;
+    document.getElementById('ec-nom').value          = c.nombre||'';
+    document.getElementById('ec-prod').value         = c.prod||'';
+    document.getElementById('ec-pref').value         = c.prefijo||'593';
+    document.getElementById('ec-tel').value          = c.telefono||'';
+    document.getElementById('ec-saldo').value        = c.saldo||0;
+    document.getElementById('ec-cuota').value        = c.cuota||'';
+    document.getElementById('ec-dir').value          = c.direccion||'';
+    document.getElementById('ec-fecha-entrada').value= c.fechaEntrada||'';
+    document.getElementById('ec-fecha').value        = c.fechaCobro||'';
+    document.getElementById('ec-frec').value         = c.frecuencia||'Mensual';
+    closeM(); setTimeout(()=>openM('m-editar-cliente'),200);
 }
-async function guardarEdicionCliente(){
-    const datos={
-        nombre:document.getElementById('ec-nom').value.trim(),
-        prod:document.getElementById('ec-prod').value,
-        prefijo:document.getElementById('ec-pref').value,
-        telefono:document.getElementById('ec-tel').value,
-        saldo:parseFloat(document.getElementById('ec-saldo').value)||0,
-        cuota:parseFloat(document.getElementById('ec-cuota').value)||null,
-        direccion:document.getElementById('ec-dir').value,
-        fechaEntrada:document.getElementById('ec-fentrada').value,
-        fechaCobro:document.getElementById('ec-fecha').value,
-        frecuencia:document.getElementById('ec-frec').value
+
+function guardarEdicionCliente(){
+    const datos = {
+        nombre:      document.getElementById('ec-nom').value.trim(),
+        prod:        document.getElementById('ec-prod').value,
+        prefijo:     document.getElementById('ec-pref').value,
+        telefono:    document.getElementById('ec-tel').value,
+        saldo:       parseFloat(document.getElementById('ec-saldo').value)||0,
+        cuota:       parseFloat(document.getElementById('ec-cuota').value)||null,
+        direccion:   document.getElementById('ec-dir').value,
+        fechaEntrada:document.getElementById('ec-fecha-entrada').value,
+        fechaCobro:  document.getElementById('ec-fecha').value,
+        frecuencia:  document.getElementById('ec-frec').value
     };
-    if(!datos.nombre){mostrarToast('Ingresa un nombre');return;}
-    await db.collection('clientes').doc(cliActivo.id).update(datos);
-    mostrarToast('✅ Cliente actualizado');closeM();
+    if(!datos.nombre){ mostrarToast('Ingresa un nombre'); return; }
+    db.collection('clientes').doc(cliActivo.id).update(datos)
+    .then(()=>{ mostrarToast('✅ Cliente actualizado'); closeM(); })
+    .catch(e=>mostrarToast('Error: '+e.message));
 }
+
 function eliminarClienteCompleto(){
-    if(!confirm(`¿Eliminar a ${cliActivo.nombre}?`))return;
+    if(!confirm(`¿Eliminar a ${cliActivo.nombre}? Esta acción no se puede deshacer.`)) return;
     db.collection('clientes').doc(cliActivo.id).delete()
-    .then(()=>{closeM();mostrarToast('Cliente eliminado');});
+    .then(()=>{ closeM(); mostrarToast('Cliente eliminado'); });
 }
 
 // ══════════════════════════════════════════════════════
 // ABONOS
 // ══════════════════════════════════════════════════════
 async function registrarAbono(){
-    const m=parseFloat(document.getElementById('input-abono').value);
-    if(!m||m<=0){mostrarToast('Ingresa un monto válido');return;}
-    const nuevoSaldo=cliActivo.saldo-m;
-    const ahora=new Date();
-    const fechaStr=ahora.toLocaleDateString('es-ES',{day:'2-digit',month:'2-digit',year:'numeric'});
-    const horaStr=ahora.toLocaleTimeString('es-ES',{hour:'2-digit',minute:'2-digit'});
-    const numComp='SAM-'+Date.now().toString().slice(-8);
-    await db.collection('clientes').doc(cliActivo.id).update({
-        saldo:nuevoSaldo,
-        historial:firebase.firestore.FieldValue.arrayUnion({
-            monto:m,fecha:fechaStr,hora:horaStr,
-            numComp,saldoDespues:nuevoSaldo,cobrador:uSesion.nombre
-        })
-    });
-    closeM();
-    document.getElementById('input-abono').value='';
-    cliActivo.saldo=nuevoSaldo;
-    mostrarComprobante({monto:m,saldo:nuevoSaldo,fecha:fechaStr,hora:horaStr,num:numComp,cliente:cliActivo});
-    const cfg=loadCfg();
-    if(cfg.msg4&&cliActivo.telefono){
-        setTimeout(()=>{
-            if(confirm(`¿Enviar confirmación de pago a ${cliActivo.nombre}?`))
-                dispararWA({...cliActivo,saldo:nuevoSaldo},4,{monto:m});
-        },1500);
-    }
+    const m = parseFloat(document.getElementById('input-abono').value);
+    if(!m||m<=0){ mostrarToast('Ingresa un monto válido'); return; }
+    const nuevoSaldo = parseFloat(cliActivo.saldo) - m;
+    const ahora   = new Date();
+    const fechaStr= ahora.toLocaleDateString('es-ES',{day:'2-digit',month:'2-digit',year:'numeric'});
+    const horaStr = ahora.toLocaleTimeString('es-ES',{hour:'2-digit',minute:'2-digit'});
+    const numComp = 'SAM-'+Date.now().toString().slice(-8);
+    // Actualizar fecha cobro a siguiente período
+    const siguienteFecha = calcularSiguienteFecha(cliActivo.fechaCobro, cliActivo.frecuencia);
+    try {
+        await db.collection('clientes').doc(cliActivo.id).update({
+            saldo: parseFloat(nuevoSaldo.toFixed(2)),
+            fechaCobro: siguienteFecha,
+            historial: firebase.firestore.FieldValue.arrayUnion({
+                monto: m,
+                fecha: fechaStr,
+                hora:  horaStr,
+                numComp,
+                saldoDespues: parseFloat(nuevoSaldo.toFixed(2)),
+                cobrador: uSesion.nombre
+            })
+        });
+        cliActivo.saldo = nuevoSaldo;
+        cliActivo.fechaCobro = siguienteFecha;
+        closeM();
+        document.getElementById('input-abono').value = '';
+        mostrarComprobante({ monto:m, saldo:nuevoSaldo, fecha:fechaStr, hora:horaStr, num:numComp, cliente:cliActivo });
+        const cfg = loadCfgNotif();
+        if(cfg.msg4 && cliActivo.telefono){
+            setTimeout(()=>{
+                if(confirm(`¿Enviar confirmación de pago a ${cliActivo.nombre}?`))
+                    dispararWA(cliActivo, 4, { monto:m });
+            }, 1500);
+        }
+    } catch(e){ mostrarToast('Error: '+e.message); }
 }
-function abrirDetalleAbono(p,idx,c){
-    abonoActivo=p;abonoActivoIdx=idx;cliActivo=c;
-    document.getElementById('abd-monto').innerText=`$ ${parseFloat(p.monto).toFixed(2)}`;
-    document.getElementById('abd-num').innerText=p.numComp||'---';
-    document.getElementById('abd-cli').innerText=c.nombre;
-    document.getElementById('abd-fecha').innerText=p.fecha+(p.hora&&p.hora!='--:--'?' · '+p.hora:'');
-    document.getElementById('abd-cobrador').innerText=p.cobrador||uSesion.nombre;
-    document.getElementById('abd-saldo').innerText=p.saldoDespues!=null?`$ ${parseFloat(p.saldoDespues).toFixed(2)}`:'---';
-    document.getElementById('abd-nuevo-monto').value='';
-    closeM();setTimeout(()=>openM('m-abono-det'),200);
+
+function calcularSiguienteFecha(fechaActual, frec){
+    if(!fechaActual) return fechaActual;
+    const f = new Date(fechaActual+'T12:00:00');
+    if(frec==='Diario')     f.setDate(f.getDate()+1);
+    else if(frec==='Semanal')   f.setDate(f.getDate()+7);
+    else if(frec==='Quincenal') f.setDate(f.getDate()+15);
+    else                        f.setMonth(f.getMonth()+1);
+    return f.toISOString().split('T')[0];
 }
+
+function abrirDetalleAbono(pago, idx, cli){
+    abonoActivoIdx  = idx;
+    abonoActivoData = pago;
+    if(cli && cli.id) cliActivo = cli;
+    const num      = pago.numComp || ('SAM-HIST-'+(cli||cliActivo).id.slice(-6).toUpperCase());
+    const saldoDes = pago.saldoDespues !== undefined ? pago.saldoDespues : (cli||cliActivo).saldo;
+    document.getElementById('ad-monto-display').innerText = `$ ${parseFloat(pago.monto).toFixed(2)}`;
+    document.getElementById('ad-fecha-display').innerText = pago.fecha+(pago.hora&&pago.hora!='--:--'?' · '+pago.hora:'');
+    document.getElementById('ad-num-display').innerText   = num;
+    document.getElementById('ad-cliente').innerText       = (cli||cliActivo).nombre;
+    document.getElementById('ad-saldo').innerText         = `$ ${parseFloat(saldoDes).toFixed(2)}`;
+    document.getElementById('ad-nuevo-monto').value       = parseFloat(pago.monto).toFixed(2);
+    closeM(); openM('m-abono-detalle');
+}
+
 function verComprobanteDesdeDetalle(){
-    mostrarComprobante({monto:abonoActivo.monto,saldo:abonoActivo.saldoDespues||cliActivo.saldo,fecha:abonoActivo.fecha,hora:abonoActivo.hora||'',num:abonoActivo.numComp||'SAM',cliente:cliActivo});
+    const p = abonoActivoData, cli = cliActivo;
+    const num      = p.numComp || ('SAM-HIST-'+cli.id.slice(-6).toUpperCase());
+    const saldoDes = p.saldoDespues !== undefined ? p.saldoDespues : cli.saldo;
+    closeM();
+    mostrarComprobante({ monto:parseFloat(p.monto), saldo:saldoDes, fecha:p.fecha, hora:p.hora||'---', num, cliente:cli });
 }
+
 function reenviarWADesdeDetalle(){
-    dispararWA(cliActivo,4,{monto:abonoActivo.monto});
+    const p = abonoActivoData, cli = cliActivo;
+    const num      = p.numComp || ('SAM-HIST-'+cli.id.slice(-6).toUpperCase());
+    const saldoDes = p.saldoDespues !== undefined ? p.saldoDespues : cli.saldo;
+    llenarRecibo(cli, parseFloat(p.monto), saldoDes, p.fecha, p.hora||'---', num);
+    comprobanteActual = { monto:parseFloat(p.monto), saldo:saldoDes, fecha:p.fecha, hora:p.hora||'---', num, cliente:cli };
+    abrirWATexto(cli);
+    mostrarToast('📲 WhatsApp abierto');
 }
+
 async function guardarEdicionAbono(){
-    const nuevo=parseFloat(document.getElementById('abd-nuevo-monto').value);
-    if(!nuevo||nuevo<=0){mostrarToast('Monto inválido');return;}
-    const hist=[...(cliActivo.historial||[])];
-    const dif=nuevo-hist[abonoActivoIdx].monto;
-    hist[abonoActivoIdx]={...hist[abonoActivoIdx],monto:nuevo,saldoDespues:(hist[abonoActivoIdx].saldoDespues||0)-dif,editado:true};
-    const nuevoSaldo=(cliActivo.saldo||0)-dif;
-    await db.collection('clientes').doc(cliActivo.id).update({saldo:nuevoSaldo,historial:hist});
-    mostrarToast('✅ Abono editado');closeM();
+    const nuevo = parseFloat(document.getElementById('ad-nuevo-monto').value);
+    if(!nuevo||nuevo<=0){ mostrarToast('Monto inválido'); return; }
+    const hist = [...(cliActivo.historial||[])];
+    const dif  = nuevo - hist[abonoActivoIdx].monto;
+    hist[abonoActivoIdx] = { ...hist[abonoActivoIdx], monto:nuevo, saldoDespues:(hist[abonoActivoIdx].saldoDespues||0)-dif, editado:true };
+    const nuevoSaldo = (parseFloat(cliActivo.saldo)||0) - dif;
+    await db.collection('clientes').doc(cliActivo.id).update({ saldo:nuevoSaldo, historial:hist });
+    mostrarToast('✅ Abono editado'); closeM();
 }
-async function eliminarAbono(){
-    if(!confirm('¿Eliminar este abono?'))return;
-    const hist=[...(cliActivo.historial||[])];
-    const montoElim=hist[abonoActivoIdx].monto;
+
+async function eliminarAbonoIndividual(){
+    if(!confirm('¿Eliminar este abono?')) return;
+    const hist      = [...(cliActivo.historial||[])];
+    const montoElim = hist[abonoActivoIdx].monto;
     hist.splice(abonoActivoIdx,1);
-    const nuevoSaldo=(cliActivo.saldo||0)+montoElim;
-    await db.collection('clientes').doc(cliActivo.id).update({saldo:nuevoSaldo,historial:hist});
-    mostrarToast('Abono eliminado');closeM();
+    const nuevoSaldo = (parseFloat(cliActivo.saldo)||0) + montoElim;
+    await db.collection('clientes').doc(cliActivo.id).update({ saldo:nuevoSaldo, historial:hist });
+    mostrarToast('Abono eliminado'); closeM();
 }
 
 // ══════════════════════════════════════════════════════
 // COMPROBANTE
 // ══════════════════════════════════════════════════════
-function llenarRecibo(cli,monto,saldo,fecha,hora,num){
-    document.getElementById('r-cobrador').innerText=uSesion?uSesion.nombre:'---';
-    document.getElementById('r-cliente').innerText=cli.nombre;
-    document.getElementById('r-prod').innerText=cli.prod||'---';
-    document.getElementById('r-fecha').innerText=fecha;
-    document.getElementById('r-hora').innerText=hora;
-    document.getElementById('r-num').innerText=num;
-    document.getElementById('r-monto').innerText=`$ ${parseFloat(monto).toFixed(2)}`;
-    document.getElementById('r-saldo').innerText=`$ ${parseFloat(saldo).toFixed(2)}`;
+function llenarRecibo(cli, monto, saldo, fecha, hora, num){
+    const prodTxt = cli.productos&&cli.productos.length
+        ? cli.productos.map(p=>p.nombre).join(', ')
+        : (cli.prod||'---');
+    document.getElementById('r-cobrador').innerText = uSesion ? uSesion.nombre : '---';
+    document.getElementById('r-cliente').innerText  = cli.nombre;
+    document.getElementById('r-prod').innerText     = prodTxt;
+    document.getElementById('r-fecha').innerText    = fecha;
+    document.getElementById('r-hora').innerText     = hora;
+    document.getElementById('r-num').innerText      = num;
+    document.getElementById('r-monto').innerText    = `$ ${parseFloat(monto).toFixed(2)}`;
+    document.getElementById('r-saldo').innerText    = `$ ${parseFloat(saldo).toFixed(2)}`;
 }
-function mostrarComprobante({monto,saldo,fecha,hora,num,cliente}){
-    const cli=cliente||cliActivo;
-    comprobanteActual={monto,saldo,fecha,hora,num,cliente:cli};
-    llenarRecibo(cli,monto,saldo,fecha,hora,num);
-    const cBox=document.getElementById('comprobante-canvas-box');
-    cBox.innerHTML='<div style="padding:30px;text-align:center;color:#aaa;font-size:13px;font-weight:700">Generando comprobante...</div>';
-    document.getElementById('comprobante-wrap').style.display='flex';
-    const gen=()=>{
-        if(!window.html2canvas){setTimeout(gen,800);return;}
+
+function mostrarComprobante({ monto, saldo, fecha, hora, num, cliente }){
+    const cli = cliente || cliActivo;
+    comprobanteActual = { monto, saldo, fecha, hora, num, cliente:cli };
+    llenarRecibo(cli, monto, saldo, fecha, hora, num);
+    const cBox = document.getElementById('comprobante-canvas-box');
+    cBox.innerHTML = '<div style="padding:30px;text-align:center;color:#aaa;font-size:13px;font-weight:700">Generando comprobante...</div>';
+    document.getElementById('comprobante-wrap').style.display = 'flex';
+    const gen = ()=>{
+        if(!window.html2canvas){ setTimeout(gen,800); return; }
         window.html2canvas(document.getElementById('recibo-visual'),{
-            scale:2,useCORS:true,backgroundColor:'#ffffff',logging:false
+            scale:2, useCORS:true, backgroundColor:'#ffffff', logging:false
         }).then(canvas=>{
-            cBox.innerHTML='';
+            cBox.innerHTML = '';
             cBox.appendChild(canvas);
         }).catch(()=>{
-            cBox.innerHTML='<div style="padding:20px;text-align:center;font-size:12px;color:#888">Usa el botón WA para enviar.</div>';
+            cBox.innerHTML = '<div style="padding:20px;text-align:center;font-size:12px;color:#888">Usa el botón WA para enviar.</div>';
         });
     };
-    setTimeout(gen,200);
+    setTimeout(gen, 200);
 }
+
 function descargarComprobante(){
-    const canvas=document.querySelector('#comprobante-canvas-box canvas');
-    if(!canvas){mostrarToast('Espera que cargue');return;}
-    const link=document.createElement('a');
-    link.download=`comprobante_SAM_${comprobanteActual?comprobanteActual.cliente.nombre.replace(/\s+/g,'_'):'pago'}_${Date.now()}.png`;
-    link.href=canvas.toDataURL('image/png');
+    const canvas = document.querySelector('#comprobante-canvas-box canvas');
+    if(!canvas){ mostrarToast('Espera que cargue'); return; }
+    const link = document.createElement('a');
+    link.download = `SAM_${comprobanteActual?comprobanteActual.cliente.nombre.replace(/\s+/g,'_'):'pago'}_${Date.now()}.png`;
+    link.href = canvas.toDataURL('image/png');
     link.click();
 }
+
 async function compartirWhatsApp(){
-    const cli=comprobanteActual?comprobanteActual.cliente:cliActivo;
-    const canvas=document.querySelector('#comprobante-canvas-box canvas');
-    if(canvas&&navigator.share&&navigator.canShare){
-        try{
+    const cli    = comprobanteActual ? comprobanteActual.cliente : cliActivo;
+    const canvas = document.querySelector('#comprobante-canvas-box canvas');
+    if(canvas && navigator.share && navigator.canShare){
+        try {
             await new Promise((res,rej)=>{
                 canvas.toBlob(async blob=>{
-                    try{
-                        const f=new File([blob],'comprobante_SAM.png',{type:'image/png'});
-                        if(navigator.canShare({files:[f]})){await navigator.share({title:'Comprobante SAM',files:[f]});res();}
-                        else rej();
-                    }catch(e){rej(e);}
+                    try {
+                        const f = new File([blob],'comprobante_SAM.png',{type:'image/png'});
+                        if(navigator.canShare({files:[f]})){
+                            await navigator.share({ title:'Comprobante SAM', files:[f] });
+                            res();
+                        } else rej();
+                    } catch(e){ rej(e); }
                 },'image/png');
             });
             return;
-        }catch(e){}
+        } catch(e){}
     }
     abrirWATexto(cli);
 }
+
 function abrirWATexto(cli){
-    const c=cli||(comprobanteActual?comprobanteActual.cliente:cliActivo);
-    const tel=c&&c.prefijo&&c.telefono?`${c.prefijo}${c.telefono}`:'';
-    const msg=`✅ *COMPROBANTE DE PAGO - SAM*\n\n👤 Cliente: ${c?c.nombre:'---'}\n📦 Producto: ${c?(c.prod||'---'):'---'}\n💵 Monto pagado: ${document.getElementById('r-monto').innerText}\n📅 Fecha: ${document.getElementById('r-fecha').innerText}\n⏰ Hora: ${document.getElementById('r-hora').innerText}\n🔖 N° Comp: ${document.getElementById('r-num').innerText}\n💳 Saldo pendiente: ${document.getElementById('r-saldo').innerText}\n\n_Gracias por su pago - Sistema SAM_`;
-    window.open(tel?`https://wa.me/${tel}?text=${encodeURIComponent(msg)}`:`https://wa.me/?text=${encodeURIComponent(msg)}`,'_blank');
+    const c   = cli || (comprobanteActual ? comprobanteActual.cliente : cliActivo);
+    const tel = c && c.prefijo && c.telefono ? `${c.prefijo}${c.telefono}` : '';
+    const msg = `✅ *COMPROBANTE DE PAGO - SAM*\n\n👤 Cliente: ${c?c.nombre:'---'}\n📦 Producto: ${document.getElementById('r-prod').innerText}\n💵 Monto pagado: ${document.getElementById('r-monto').innerText}\n📅 Fecha: ${document.getElementById('r-fecha').innerText}\n⏰ Hora: ${document.getElementById('r-hora').innerText}\n🔖 N° Comp: ${document.getElementById('r-num').innerText}\n💳 Saldo pendiente: ${document.getElementById('r-saldo').innerText}\n\n_Gracias por su pago - Sistema SAM_`;
+    window.open(tel ? `https://wa.me/${tel}?text=${encodeURIComponent(msg)}` : `https://wa.me/?text=${encodeURIComponent(msg)}`, '_blank');
 }
+
 function cerrarComprobante(){
-    document.getElementById('comprobante-wrap').style.display='none';
-    comprobanteActual=null;
+    document.getElementById('comprobante-wrap').style.display = 'none';
+    comprobanteActual = null;
 }
+
 // ══════════════════════════════════════════════════════
 // WHATSAPP
 // ══════════════════════════════════════════════════════
-function aplicarVariables(plantilla,c,extra){
+function aplicarVariables(plantilla, c, extra){
     return plantilla
-        .replace(/{nombre}/g,c.nombre||'')
-        .replace(/{saldo}/g,(c.saldo||0).toFixed(2))
-        .replace(/{cuota}/g,c.cuota?parseFloat(c.cuota).toFixed(2):'0.00')
-        .replace(/{fecha}/g,c.fechaCobro||'')
-        .replace(/{monto}/g,extra&&extra.monto?parseFloat(extra.monto).toFixed(2):'0.00');
+        .replace(/{nombre}/g, c.nombre||'')
+        .replace(/{saldo}/g,  c.saldo!=null ? parseFloat(c.saldo).toFixed(2) : '0.00')
+        .replace(/{cuota}/g,  c.cuota ? parseFloat(c.cuota).toFixed(2) : '0.00')
+        .replace(/{fecha}/g,  c.fechaCobro||'')
+        .replace(/{monto}/g,  extra&&extra.monto ? parseFloat(extra.monto).toFixed(2) : '0.00');
 }
-function dispararWA(c,tipo,extra){
-    const cfg=loadCfg();
-    const plantillas={1:cfg.msg1,2:cfg.msg2,3:cfg.msg3,4:cfg.msg4};
-    const dflt={
-        1:`Hola ${c.nombre}, se acerca su fecha de pago. Saldo: $${(c.saldo||0).toFixed(2)}.`,
-        2:`Hola ${c.nombre}, hoy corresponde su abono de $${c.cuota||0}.`,
-        3:`Estimado(a) ${c.nombre}, su cuenta tiene saldo pendiente de $${(c.saldo||0).toFixed(2)}.`,
-        4:`✅ Hola ${c.nombre}, confirmamos su pago. Gracias.`
+
+function dispararWA(c, tipo, extra){
+    const cfg = loadCfgNotif();
+    const dflt = {
+        1: `Hola ${c.nombre}, le recordamos que su fecha de pago se acerca el ${c.fechaCobro||''}. Su saldo es $${parseFloat(c.saldo||0).toFixed(2)}. ¡Gracias!`,
+        2: `Hola ${c.nombre}, hoy corresponde su abono de $${c.cuota?parseFloat(c.cuota).toFixed(2):'0.00'}. Estaremos atentos. ¡Gracias!`,
+        3: `Estimado(a) ${c.nombre}, su cuenta tiene un saldo vencido de $${parseFloat(c.saldo||0).toFixed(2)}. Por favor comuníquese con nosotros para ponerse al día.`,
+        4: `✅ Hola ${c.nombre}, confirmamos su pago de $${extra&&extra.monto?parseFloat(extra.monto).toFixed(2):'0.00'}. Saldo actual: $${parseFloat(c.saldo||0).toFixed(2)}. ¡Gracias por su pago!`
     };
-    const texto=plantillas[tipo]?aplicarVariables(plantillas[tipo],c,extra):dflt[tipo];
-    window.open(`https://wa.me/${c.prefijo}${c.telefono}?text=${encodeURIComponent(texto)}`,'_blank');
+    const plantillas = { 1:cfg.msg1, 2:cfg.msg2, 3:cfg.msg3, 4:cfg.msg4 };
+    const texto = plantillas[tipo] ? aplicarVariables(plantillas[tipo], c, extra) : dflt[tipo];
+    const tel   = c.prefijo && c.telefono ? `${c.prefijo}${c.telefono}` : '';
+    window.open(tel
+        ? `https://wa.me/${tel}?text=${encodeURIComponent(texto)}`
+        : `https://wa.me/?text=${encodeURIComponent(texto)}`,
+        '_blank');
 }
-function enviarWA(tipo){dispararWA(cliActivo,tipo);}
+
+function enviarWA(tipo){ dispararWA(cliActivo, tipo); }
 
 // ══════════════════════════════════════════════════════
 // NOTIFICACIONES
 // ══════════════════════════════════════════════════════
+function calcularGruposNotif(){
+    const hoy       = new Date();
+    const cfg       = loadCfgNotif();
+    const diasR     = cfg.diasRecuerdo;
+    const diasA     = cfg.diasAtraso;
+    const g         = { recuerdo:[], hoy:[], atrasado:[] };
+    todosClientes.forEach(c=>{
+        if(!c.telefono || c.saldo<=0 || !c.fechaCobro) return;
+        const fc   = new Date(c.fechaCobro+'T00:00:00');
+        const diff = Math.round((fc - hoy) / (1000*60*60*24));
+        if(diff === 0)
+            g.hoy.push(c);
+        else if(diff > 0 && diff <= diasR)
+            g.recuerdo.push({ ...c, _diff:diff });
+        else if(diff < 0 && Math.abs(diff) >= diasA)
+            g.atrasado.push({ ...c, _diff:Math.abs(diff) });
+    });
+    return g;
+}
+
+function mostrarPanelNotif(g){
+    if(!g) g = calcularGruposNotif();
+    const total = g.recuerdo.length + g.hoy.length + g.atrasado.length;
+    if(!total){ mostrarToast('Sin notificaciones pendientes'); return; }
+    document.getElementById('notif-subtitle').innerText =
+        `${total} cliente${total>1?'s necesitan':' necesita'} atención`;
+    let html = '';
+    // ATRASADOS primero — siempre
+    if(g.atrasado.length){
+        html += `<div class="notif-group-title" style="color:var(--red)">🔴 ATRASADOS (${g.atrasado.length})</div>`;
+        g.atrasado.forEach((c,i)=>{
+            html += buildNC(c, 3, 'a'+i,
+                `<span style="color:var(--red);font-weight:900">${c._diff} día${c._diff>1?'s':''} de atraso</span>`);
+        });
+    }
+    if(g.hoy.length){
+        html += `<div class="notif-group-title" style="color:#FF9500">💰 PAGO HOY (${g.hoy.length})</div>`;
+        g.hoy.forEach((c,i)=>{
+            html += buildNC(c, 2, 'h'+i, `<span style="color:#FF9500;font-weight:900">vence hoy</span>`);
+        });
+    }
+    if(g.recuerdo.length){
+        html += `<div class="notif-group-title" style="color:var(--green)">📅 RECORDATORIO (${g.recuerdo.length})</div>`;
+        g.recuerdo.forEach((c,i)=>{
+            html += buildNC(c, 1, 'r'+i,
+                `<span style="color:var(--green);font-weight:900">en ${c._diff} día${c._diff>1?'s':''}</span>`);
+        });
+    }
+    document.getElementById('notif-lista').innerHTML = html;
+    window._notifGrupos = g;
+    document.getElementById('notif-overlay').style.display = 'flex';
+}
+
+function buildNC(c, tipo, id, extra){
+    const col = tipo===3 ? 'var(--red)' : tipo===2 ? '#FF9500' : 'var(--green)';
+    return `<div class="notif-cli-card">
+        <div style="flex:1;min-width:0">
+            <b style="font-size:13px">${c.nombre}</b>
+            <div style="font-size:11px;color:#888;margin-top:2px">
+                $${parseFloat(c.saldo).toFixed(2)} · ${extra}
+            </div>
+        </div>
+        <button class="notif-send-btn" id="nb-${id}" onclick="sendN(${sj(c)},${tipo},'nb-${id}')">📲 ENVIAR</button>
+    </div>`;
+}
+
+function sendN(c, t, bid){
+    dispararWA(c, t);
+    const b = document.getElementById(bid);
+    if(b){ b.innerText='✓ ENVIADO'; b.classList.add('sent'); b.disabled=true; }
+}
+
+// ENVIAR EN SECUENCIA — abre uno cada 3 segundos
+function enviarEnSecuencia(){
+    const g = window._notifGrupos || {};
+    const todos = [
+        ...(g.atrasado||[]).map(c=>({c,t:3})),
+        ...(g.hoy||[]).map(c=>({c,t:2})),
+        ...(g.recuerdo||[]).map(c=>({c,t:1}))
+    ];
+    if(!todos.length){ mostrarToast('Sin clientes para notificar'); return; }
+    cerrarNotif();
+    let i = 0;
+    mostrarToast(`📲 Enviando ${todos.length} mensajes en secuencia...`, 4000);
+    const intervalo = setInterval(()=>{
+        if(i >= todos.length){ clearInterval(intervalo); mostrarToast('✅ Secuencia completada'); return; }
+        dispararWA(todos[i].c, todos[i].t);
+        i++;
+    }, 3000);
+}
+
+function cerrarNotif(){
+    document.getElementById('notif-overlay').style.display = 'none';
+}
+
+function probarNotifAhora(){
+    closeM();
+    setTimeout(()=>mostrarPanelNotif(), 300);
+}
+
 function guardarConfigNotif(){
-    saveCfg({
-        diasRecuerdo:document.getElementById('cfg-dias-recuerdo').value,
-        diasAtraso:document.getElementById('cfg-dias-atraso').value,
-        modoNotif:document.getElementById('cfg-modo-notif').value,
-        horaEnvio:document.getElementById('cfg-hora-envio').value,
-        swActivo:document.getElementById('cfg-sw-activo').checked,
-        msg1:document.getElementById('cfg-msg-1').value,
-        msg2:document.getElementById('cfg-msg-2').value,
-        msg3:document.getElementById('cfg-msg-3').value,
-        msg4:document.getElementById('cfg-msg-4').value
+    saveCfgNotif({
+        diasRecuerdo: parseInt(document.getElementById('cfg-dias-recuerdo').value)||2,
+        diasAtraso:   parseInt(document.getElementById('cfg-dias-atraso').value)||1,
+        horaEnvio:    document.getElementById('cfg-hora-envio').value,
+        swActivo:     document.getElementById('cfg-sw-activo').checked,
+        msg1: document.getElementById('cfg-msg-1').value,
+        msg2: document.getElementById('cfg-msg-2').value,
+        msg3: document.getElementById('cfg-msg-3').value,
+        msg4: document.getElementById('cfg-msg-4').value
     });
     mostrarToast('✅ Configuración guardada');
     closeM();
-    if(document.getElementById('cfg-sw-activo').checked)programarNotifDiaria();
+    if(document.getElementById('cfg-sw-activo').checked) programarNotifDiaria();
 }
+
 function toggleSW(){
-    if(document.getElementById('cfg-sw-activo').checked)programarNotifDiaria();
+    saveCfg('swActivo', document.getElementById('cfg-sw-activo').checked);
+    if(document.getElementById('cfg-sw-activo').checked) programarNotifDiaria();
 }
+
+// Programar notificación diaria a la hora configurada
 function programarNotifDiaria(){
-    const cfg=loadCfg();
-    const [h,m]=cfg.horaEnvio.split(':').map(Number);
-    const ahora=new Date();
-    const objetivo=new Date();
-    objetivo.setHours(h,m,0,0);
-    if(objetivo<=ahora)objetivo.setDate(objetivo.getDate()+1);
-    const diff=objetivo-ahora;
-    setTimeout(()=>{
+    const cfg  = loadCfgNotif();
+    if(!cfg.swActivo) return;
+    const [h,m] = cfg.horaEnvio.split(':').map(Number);
+    const ahora  = new Date();
+    const objetivo = new Date();
+    objetivo.setHours(h, m, 0, 0);
+    if(objetivo <= ahora) objetivo.setDate(objetivo.getDate()+1);
+    const diff = objetivo - ahora;
+    // Limpiar timer anterior si existe
+    if(window._notifTimer) clearTimeout(window._notifTimer);
+    window._notifTimer = setTimeout(()=>{
         mostrarPanelNotif();
-        setInterval(()=>mostrarPanelNotif(),86400000);
-    },diff);
+        // Repetir cada 24 horas
+        window._notifInterval = setInterval(()=>mostrarPanelNotif(), 86400000);
+    }, diff);
 }
-function probarNotifAhora(){closeM();setTimeout(()=>mostrarPanelNotif(),300);}
-function verificarNotifAlAbrir(){
-    const cfg=loadCfg();
-    if(!cfg.swActivo)return;
-    const ultima=localStorage.getItem('sam_ultima_notif')||'';
-    const hoy=new Date().toISOString().split('T')[0];
-    if(ultima===hoy)return;
-    localStorage.setItem('sam_ultima_notif',hoy);
-    setTimeout(()=>mostrarPanelNotif(),2000);
-}
-function mostrarPanelNotif(){
-    const cfg=loadCfg();
-    const recuerdo=[],hoyList=[],atrasado=[];
-    todosClientes.forEach(c=>{
-        if(!c.fechaCobro||c.saldo<=0)return;
-        const fc=new Date(c.fechaCobro+'T12:00:00');
-        const diff=Math.round((fc-new Date())/(1000*60*60*24));
-        if(diff<0&&Math.abs(diff)>=cfg.diasAtraso)atrasado.push(c);
-        else if(diff===0)hoyList.push(c);
-        else if(diff>0&&diff<=cfg.diasRecuerdo)recuerdo.push(c);
-    });
-    const total=hoyList.length+recuerdo.length+atrasado.length;
-    if(!total)return;
-    window._notifGrupos={hoy:hoyList,recuerdo,atrasado};
-    let html='';
-    if(hoyList.length){
-        html+=`<div class="notif-group-title" style="color:#FF9500">💰 PAGO HOY (${hoyList.length})</div>`;
-        hoyList.forEach((c,i)=>{
-            html+=`<div class="notif-cli-card">
-                <div><b>${c.nombre}</b><br><small style="color:#888">$${(c.saldo||0).toFixed(2)}</small></div>
-                <button class="notif-send-btn" id="nb2_${i}" onclick="sendNot(${sj(c)},2,'nb2_${i}')">ENVIAR WA</button>
-            </div>`;
-        });
-    }
-    if(recuerdo.length){
-        html+=`<div class="notif-group-title" style="color:#007AFF">📅 RECORDATORIO (${recuerdo.length})</div>`;
-        recuerdo.forEach((c,i)=>{
-            html+=`<div class="notif-cli-card">
-                <div><b>${c.nombre}</b><br><small style="color:#888">$${(c.saldo||0).toFixed(2)} · vence ${c.fechaCobro}</small></div>
-                <button class="notif-send-btn" id="nb1_${i}" onclick="sendNot(${sj(c)},1,'nb1_${i}')">ENVIAR WA</button>
-            </div>`;
-        });
-    }
-    if(atrasado.length){
-        html+=`<div class="notif-group-title" style="color:var(--red)">🔴 ATRASADOS (${atrasado.length})</div>`;
-        atrasado.forEach((c,i)=>{
-            html+=`<div class="notif-cli-card">
-                <div><b>${c.nombre}</b><br><small style="color:#888">$${(c.saldo||0).toFixed(2)} · venció ${c.fechaCobro}</small></div>
-                <button class="notif-send-btn" id="nb3_${i}" onclick="sendNot(${sj(c)},3,'nb3_${i}')">ENVIAR WA</button>
-            </div>`;
-        });
-    }
-    document.getElementById('notif-lista').innerHTML=html;
-    document.getElementById('notif-subtitle').innerText=`${total} cliente${total>1?'s':''} requiere${total>1?'n':''} atención hoy`;
-    document.getElementById('notif-overlay').style.display='flex';
-    if(cfg.modoNotif==='auto'){
-        hoyList.forEach(c=>dispararWA(c,2));
-        recuerdo.forEach(c=>dispararWA(c,1));
-        atrasado.forEach(c=>dispararWA(c,3));
-        mostrarToast(`✅ ${total} notificaciones enviadas`);
-        cerrarNotif();
-    }
-}
-function sendNot(c,t,bid){
-    dispararWA(c,t);
-    const b=document.getElementById(bid);
-    if(b){b.innerText='✓ ENVIADO';b.classList.add('sent');b.disabled=true;}
-}
-function enviarTodas(){
-    const g=window._notifGrupos||{};
-    let n=0;
-    [...(g.hoy||[])].forEach(c=>{dispararWA(c,2);n++;});
-    [...(g.recuerdo||[])].forEach(c=>{dispararWA(c,1);n++;});
-    [...(g.atrasado||[])].forEach(c=>{dispararWA(c,3);n++;});
-    cerrarNotif();
-    mostrarToast(`📲 ${n} WhatsApp${n>1?'s':''} abiertos`);
-}
-function cerrarNotif(){document.getElementById('notif-overlay').style.display='none';}
 
 // ══════════════════════════════════════════════════════
 // CRONÓMETRO + INACTIVIDAD
 // ══════════════════════════════════════════════════════
 function iniciarCronometro(){
-    const startTime=Date.now();
-    const limit=parseInt(document.getElementById('session-limit').value)||3600000;
-    let ultimaAct=Date.now();
+    const startTime = Date.now();
+    const limitMs   = 3600000; // 1 hora default
+    let ultimaAct   = Date.now();
+
     ['touchstart','mousedown','keydown','click','scroll'].forEach(ev=>{
-        document.addEventListener(ev,()=>{ultimaAct=Date.now();});
+        document.addEventListener(ev, ()=>{ ultimaAct = Date.now(); }, { passive:true });
     });
+
     setInterval(()=>{
-        const total=Math.floor((Date.now()-startTime)/1000);
-        const el=document.getElementById('timer-disp');
-        if(el)el.innerText=`${String(Math.floor(total/60)).padStart(2,'0')}:${String(total%60).padStart(2,'0')}`;
-        const inact=Math.floor((Date.now()-ultimaAct)/1000);
-        const reste=Math.floor((limit/1000)-inact);
-        const id=document.getElementById('inact-disp');
-        if(id&&reste<300)id.innerText=`Cierra en: ${String(Math.floor(reste/60)).padStart(2,'0')}:${String(reste%60).padStart(2,'0')}`;
-        else if(id)id.innerText='';
-        if(inact>=(limit/1000))location.reload();
-    },1000);
+        // Timer activo
+        const total = Math.floor((Date.now()-startTime)/1000);
+        const el = document.getElementById('timer-display');
+        if(el) el.innerText =
+            `${String(Math.floor(total/60)).padStart(2,'0')}:${String(total%60).padStart(2,'0')}`;
+        // Inactividad
+        const inact  = Math.floor((Date.now()-ultimaAct)/1000);
+        const reste  = Math.floor(limitMs/1000) - inact;
+        const id = document.getElementById('inactivo-display');
+        if(id){
+            if(reste < 300)
+                id.innerText = `Cierra en: ${String(Math.floor(reste/60)).padStart(2,'0')}:${String(reste%60).padStart(2,'0')}`;
+            else
+                id.innerText = '';
+        }
+        if(inact >= limitMs/1000) location.reload();
+    }, 1000);
 }
 
 // ══════════════════════════════════════════════════════
 // WAKE LOCK
 // ══════════════════════════════════════════════════════
 async function activarWakeLock(){
-    if('wakeLock'in navigator){
-        try{
+    if('wakeLock' in navigator){
+        try {
             await navigator.wakeLock.request('screen');
-            const dot=document.getElementById('wakelock-dot');
-            if(dot){dot.style.background='var(--green)';}
-            document.addEventListener('visibilitychange',async()=>{
+            const dot = document.getElementById('wakelock-dot');
+            if(dot){ dot.style.background='var(--green)'; dot.title='Pantalla activa'; }
+            document.addEventListener('visibilitychange', async()=>{
                 if(document.visibilityState==='visible'){
-                    try{await navigator.wakeLock.request('screen');}catch(e){}
+                    try { await navigator.wakeLock.request('screen'); } catch(e){}
                 }
             });
-        }catch(e){}
+        } catch(e){}
     }
 }
 
 // ══════════════════════════════════════════════════════
-// INICIO
+// TRIPLE TOQUE ZONA ADMIN
 // ══════════════════════════════════════════════════════
-// Triple toque zona admin invisible
 (function(){
-    let toques=0,timer=null;
-    const zona=document.getElementById('zona-admin');
+    let toques = 0, timer = null;
+    const zona = document.getElementById('zona-admin');
     function registrarToque(e){
         e.preventDefault();
         toques++;
         clearTimeout(timer);
-        if(toques>=3){toques=0;abrirTeclado(true);return;}
-        timer=setTimeout(()=>{toques=0;},600);
+        if(toques >= 3){ toques=0; abrirTeclado(true); return; }
+        timer = setTimeout(()=>{ toques=0; }, 600);
     }
-    zona.addEventListener('click',registrarToque);
-    zona.addEventListener('touchend',registrarToque);
+    zona.addEventListener('click',    registrarToque);
+    zona.addEventListener('touchend', registrarToque);
 })();
 
-window.addEventListener('load',()=>{
-    const saved=localStorage.getItem('sam_pin_master');
-    if(saved)pinMaster=saved;
+// ══════════════════════════════════════════════════════
+// INICIO
+// ══════════════════════════════════════════════════════
+window.addEventListener('load', ()=>{
+    const saved = localStorage.getItem('sam_pin_master');
+    if(saved) pinMaster = saved;
     cargarFirebase();
 });
 
