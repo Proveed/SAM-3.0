@@ -1,0 +1,1371 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>SAM 3.0 | Sistema de Cobranza</title>
+<link href="https://fonts.googleapis.com/css2?family=Exo+2:wght@900&family=Montserrat:wght@300;400;700;800&display=swap" rel="stylesheet">
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<style>
+:root{--accent:#FF7A00;--dark:#000;--gray:#F2F2F7;--red:#FF3B30;--green:#28a745;--max-w:600px;}
+*{box-sizing:border-box;font-family:'Montserrat',sans-serif;outline:none;-webkit-tap-highlight-color:transparent;}
+html,body{margin:0;background:#fff;height:100%;overflow:hidden;}
+#splash{position:fixed;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;background:#fff;z-index:5000;}
+.circle-bg{position:absolute;width:min(380px,90vw);height:min(380px,90vw);border-radius:50%;background:radial-gradient(circle,rgba(255,122,0,0.08)0%,rgba(255,122,0,0.02)60%,transparent 100%);animation:breathe 4s ease-in-out infinite;pointer-events:none;}
+@keyframes breathe{0%,100%{transform:scale(1)}50%{transform:scale(1.08)}}
+.ring{position:absolute;border-radius:50%;border:1.5px solid rgba(255,122,0,0.12);animation:ringPulse 4s ease-in-out infinite;pointer-events:none;}
+.ring-1{width:min(300px,75vw);height:min(300px,75vw);}
+.ring-2{width:min(420px,95vw);height:min(420px,95vw);border-color:rgba(255,122,0,0.06);animation-delay:0.6s;}
+@keyframes ringPulse{0%,100%{transform:scale(1);opacity:0.6}50%{transform:scale(1.04);opacity:1}}
+.logo-container{position:relative;z-index:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;cursor:pointer;animation:entrar 0.9s cubic-bezier(0.34,1.56,0.64,1) both;}
+@keyframes entrar{0%{opacity:0;transform:scale(0.7)}100%{opacity:1;transform:scale(1)}}
+.logo-sam{font-family:'Exo 2',sans-serif;font-weight:900;font-size:clamp(100px,28vw,160px);letter-spacing:clamp(10px,3vw,20px);line-height:1;color:#FF7A00;animation:glow 3s ease-in-out infinite;user-select:none;}
+@keyframes glow{0%,100%{text-shadow:0 0 40px rgba(255,122,0,0.3),0 4px 20px rgba(255,122,0,0.1);}50%{text-shadow:0 0 70px rgba(255,122,0,0.6),0 4px 35px rgba(255,122,0,0.25);}}
+.logo-linea{width:0;height:3px;border-radius:2px;background:linear-gradient(90deg,transparent,#FF7A00,transparent);animation:lineaCrecer 0.8s 0.6s ease forwards;}
+@keyframes lineaCrecer{to{width:min(180px,50vw)}}
+.logo-sub{font-size:clamp(9px,2.5vw,11px);font-weight:800;letter-spacing:clamp(3px,1.5vw,6px);color:rgba(200,90,0,0.45);text-transform:uppercase;opacity:0;animation:subirFade 0.7s 1s ease forwards;}
+@keyframes subirFade{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}
+.tap-txt{position:absolute;bottom:clamp(40px,8vh,70px);font-size:11px;font-weight:700;letter-spacing:3px;text-transform:uppercase;color:rgba(200,90,0,0.35);z-index:1;animation:parpadeo 2.5s 1.5s ease-in-out infinite;}
+@keyframes parpadeo{0%,100%{opacity:0.3}50%{opacity:0.7}}
+.barra-wrap{position:absolute;bottom:0;left:0;right:0;height:3px;background:rgba(255,122,0,0.08);}
+.barra{height:100%;width:0%;background:#FF7A00;border-radius:0 2px 2px 0;transition:width 0.5s ease;box-shadow:0 0 8px rgba(255,122,0,0.4);}
+#pantalla-pin{display:none;position:fixed;inset:0;flex-direction:column;align-items:center;justify-content:center;background:#fff;padding:20px;z-index:5000;}
+.pin-modo{font-size:10px;font-weight:800;letter-spacing:4px;color:rgba(200,90,0,0.5);text-transform:uppercase;margin-bottom:16px;}
+.pin-dots{font-size:34px;color:#FF7A00;letter-spacing:16px;min-height:52px;display:flex;align-items:center;justify-content:center;margin-bottom:28px;text-shadow:0 0 12px rgba(255,122,0,0.35);}
+.teclas{display:grid;grid-template-columns:repeat(3,1fr);gap:clamp(10px,3vw,14px);width:min(260px,72vw);}
+.tecla{aspect-ratio:1;border-radius:50%;border:1.5px solid rgba(255,122,0,0.2);background:rgba(255,122,0,0.04);display:flex;align-items:center;justify-content:center;font-size:clamp(18px,5vw,24px);font-weight:700;color:#222;cursor:pointer;transition:all 0.12s;touch-action:manipulation;}
+.tecla:active{background:rgba(255,122,0,0.15);border-color:#FF7A00;transform:scale(0.9);}
+.tecla.borrar{color:#FF3B30;font-size:18px;}
+.tecla.entrar{background:#FF7A00;border-color:#FF7A00;color:#fff;font-size:14px;font-weight:900;box-shadow:0 6px 20px rgba(255,122,0,0.35);}
+.tecla.entrar:active{background:#CC5500;}
+.sesion-wrap{margin-top:22px;display:flex;flex-direction:column;align-items:center;gap:6px;}
+.sesion-label{font-size:9px;font-weight:800;color:rgba(200,90,0,0.4);letter-spacing:2px;text-transform:uppercase;}
+.sesion-select{background:rgba(255,122,0,0.05);border:1.5px solid rgba(255,122,0,0.2);border-radius:12px;color:#CC5500;font-family:'Montserrat',sans-serif;font-size:13px;font-weight:700;padding:9px 18px;-webkit-appearance:none;text-align:center;width:190px;}
+#pantalla-registro{display:none;position:fixed;inset:0;flex-direction:column;align-items:center;justify-content:center;background:#fff;padding:24px;z-index:5000;overflow-y:auto;}
+.panel{display:none;position:fixed;inset:0;background:#F9F9F9;overflow-y:auto;overflow-x:hidden;padding-bottom:120px;-webkit-overflow-scrolling:touch;}
+.panel-inner{max-width:var(--max-w);margin:0 auto;width:100%;}
+.nav-top{background:#000;color:white;padding:clamp(12px,3vw,15px) clamp(15px,4vw,20px);display:flex;justify-content:space-between;align-items:center;position:sticky;top:0;z-index:100;font-size:clamp(11px,3vw,13px);font-weight:800;}
+.header{background:#000;color:#FFF;padding:clamp(25px,5vw,40px) clamp(15px,4vw,20px) clamp(20px,4vw,30px);border-radius:0 0 40px 40px;text-align:center;}
+.card{background:#FFF;padding:clamp(14px,3vw,20px);border-radius:20px;margin:10px clamp(12px,3vw,18px);border:1px solid #EEE;display:flex;justify-content:space-between;align-items:center;box-shadow:0 4px 10px rgba(0,0,0,0.02);cursor:pointer;}
+.card:active{background:#FFF8F3;}
+.status-dot{width:12px;height:12px;border-radius:50%;display:inline-block;margin-right:8px;flex-shrink:0;}
+.modal{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.88);z-index:9999;justify-content:center;align-items:flex-end;}
+@media(min-width:520px){.modal{align-items:center;padding:15px;}.box{border-radius:35px!important;max-height:90vh!important;}}
+.box{background:#FFF;width:100%;max-width:480px;padding:clamp(18px,4vw,25px);border-radius:35px 35px 0 0;max-height:92vh;overflow-y:auto;-webkit-overflow-scrolling:touch;}
+label{font-size:10px;color:#888;font-weight:800;text-transform:uppercase;display:block;margin-top:12px;border-bottom:1px solid #EEE;padding-bottom:4px;}
+input,select,textarea{width:100%;padding:clamp(11px,3vw,14px);margin:5px 0;border-radius:12px;border:1px solid #DDD;background:var(--gray);font-size:clamp(13px,3.5vw,15px);font-weight:600;-webkit-appearance:none;appearance:none;}
+textarea{resize:vertical;font-family:'Montserrat',sans-serif;}
+.info-row{display:flex;justify-content:space-between;padding:8px 0;font-size:clamp(12px,3vw,14px);border-bottom:1px solid #F9F9F9;gap:10px;}
+.info-row span{color:#666;flex-shrink:0;}
+.info-row b{text-align:right;word-break:break-word;}
+.btn-m{width:100%;padding:clamp(13px,3vw,16px);border-radius:15px;border:none;background:var(--accent);color:white;font-weight:900;cursor:pointer;margin-top:10px;font-size:clamp(13px,3vw,15px);touch-action:manipulation;}
+.btn-exit{background:var(--red);color:white;border:none;padding:clamp(6px,2vw,8px) clamp(10px,3vw,15px);border-radius:10px;font-weight:800;font-size:clamp(10px,2.5vw,11px);cursor:pointer;}
+.fab{position:fixed;bottom:clamp(20px,5vw,30px);right:clamp(15px,5vw,25px);background:var(--accent);color:white;width:clamp(58px,15vw,70px);height:clamp(58px,15vw,70px);border-radius:22px;border:none;font-size:clamp(32px,8vw,40px);box-shadow:0 10px 25px rgba(255,122,0,0.4);cursor:pointer;display:flex;align-items:center;justify-content:center;z-index:200;line-height:1;}
+.wa-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-top:10px;}
+.wa-btn{background:#25D366;color:white;border:none;padding:clamp(8px,2vw,10px) 5px;border-radius:10px;font-size:clamp(8px,2vw,9px);font-weight:800;cursor:pointer;text-transform:uppercase;}
+.hist-item{display:flex;justify-content:space-between;align-items:center;padding:10px 12px;border-radius:12px;margin-bottom:6px;background:#fff;cursor:pointer;border:1px solid #eee;}
+.hist-item:active{background:#FFF3E0;}
+.hist-hint{font-size:9px;color:#bbb;font-weight:700;margin-top:2px;}
+.hist-box{background:#F2F2F7;padding:10px;border-radius:15px;margin:10px 0;max-height:165px;overflow-y:auto;}
+.toggle-wrap{display:flex;align-items:center;justify-content:space-between;padding:14px 0;border-bottom:1px solid #f0f0f0;}
+.toggle-wrap span{font-size:13px;font-weight:700;color:#333;flex:1;}
+.toggle{position:relative;width:50px;height:28px;flex-shrink:0;}
+.toggle input{opacity:0;width:0;height:0;}
+.slider{position:absolute;inset:0;background:#ccc;border-radius:28px;cursor:pointer;transition:.3s;}
+.slider:before{content:'';position:absolute;width:22px;height:22px;left:3px;bottom:3px;background:#fff;border-radius:50%;transition:.3s;}
+input:checked+.slider{background:var(--accent);}
+input:checked+.slider:before{transform:translateX(22px);}
+.cfg-row{display:flex;align-items:center;justify-content:space-between;padding:12px 0;border-bottom:1px solid #f0f0f0;gap:10px;}
+.cfg-row span{font-size:13px;font-weight:700;color:#333;flex:1;}
+.cfg-row input[type=number]{width:70px;text-align:center;flex-shrink:0;}
+#comprobante-wrap{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.92);z-index:99999;justify-content:center;align-items:center;padding:15px;}
+#comprobante-container{background:#fff;width:100%;max-width:400px;border-radius:20px;overflow:hidden;}
+#comprobante-canvas-box{width:100%;overflow:hidden;}
+#comprobante-canvas-box canvas{width:100%!important;height:auto!important;display:block;}
+.comp-actions{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;padding:12px;background:#fff;}
+.comp-btn{padding:12px 6px;border-radius:12px;border:none;font-size:10px;font-weight:900;cursor:pointer;text-transform:uppercase;color:white;}
+.comp-btn.dl{background:var(--accent);}
+.comp-btn.wa{background:#25D366;}
+.comp-btn.cl{background:#555;}
+#recibo-visual{position:fixed;left:-9999px;top:0;width:360px;background:#fff;font-family:'Montserrat',sans-serif;}
+.rv-header{background:#000;color:#fff;padding:25px 20px 20px;text-align:center;}
+.rv-logo{font-family:'Exo 2',sans-serif;font-weight:900;font-size:42px;letter-spacing:10px;color:#FF7A00;}
+.rv-sub{font-size:9px;font-weight:800;color:#aaa;letter-spacing:3px;margin-top:4px;}
+.rv-body{padding:20px;}
+.rv-title{font-size:11px;font-weight:800;color:#888;text-transform:uppercase;letter-spacing:2px;border-bottom:2px solid #FF7A00;padding-bottom:6px;margin-bottom:15px;}
+.rv-row{display:flex;justify-content:space-between;padding:6px 0;font-size:12px;border-bottom:1px solid #f0f0f0;}
+.rv-row span{color:#777;font-weight:600;}
+.rv-row b{color:#000;font-weight:800;text-align:right;max-width:55%;word-break:break-word;}
+.rv-monto{background:#000;border-radius:14px;padding:18px;text-align:center;margin:18px 0;}
+.rv-monto-lbl{font-size:9px;color:#888;font-weight:800;letter-spacing:2px;text-transform:uppercase;}
+.rv-monto-val{font-size:36px;font-weight:900;color:#FF7A00;}
+.rv-saldo{background:#F9F9F9;border-radius:10px;padding:12px;text-align:center;margin-bottom:15px;}
+.rv-saldo-lbl{font-size:9px;color:#888;font-weight:800;letter-spacing:1px;}
+.rv-saldo-val{font-size:20px;font-weight:900;color:#FF3B30;}
+.rv-footer{background:#F2F2F7;padding:12px 20px;text-align:center;font-size:9px;color:#aaa;font-weight:700;letter-spacing:1px;}
+.rv-line{height:2px;background:linear-gradient(90deg,transparent,#FF7A00,transparent);}
+#plan-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.92);z-index:29999;justify-content:center;align-items:flex-end;}
+@media(min-width:520px){#plan-overlay{align-items:center;}#plan-box{border-radius:35px!important;}}
+#plan-box{background:#fff;width:100%;max-width:480px;border-radius:35px 35px 0 0;padding:25px;max-height:90vh;overflow-y:auto;}
+.plan-card{border-radius:20px;padding:18px;margin-bottom:12px;border:2px solid #eee;cursor:pointer;transition:all 0.2s;}
+.plan-card.pro{border-color:#FF7A00;background:#FFF8F3;}
+.plan-card.emp{border-color:#000;background:#F9F9F9;}
+.plan-card:active{transform:scale(0.98);}
+.plan-nombre{font-size:16px;font-weight:900;margin-bottom:4px;}
+.plan-precio{font-size:26px;font-weight:900;color:var(--accent);}
+.plan-feature{font-size:12px;color:#555;margin-top:6px;line-height:1.7;}
+.plan-badge{display:inline-block;background:#FF7A00;color:#fff;font-size:9px;font-weight:900;padding:3px 8px;border-radius:20px;margin-left:6px;letter-spacing:1px;}
+.sa-empresa-card{background:#fff;border-radius:16px;padding:14px 16px;margin-bottom:8px;border:1px solid #eee;cursor:pointer;}
+.sa-empresa-card:active{background:#FFF8F3;}
+.badge{display:inline-block;padding:3px 10px;border-radius:20px;font-size:9px;font-weight:900;letter-spacing:1px;}
+.badge-basico{background:#eee;color:#555;}
+.badge-pro{background:#FFF3E0;color:#FF7A00;}
+.badge-emp{background:#000;color:#FF7A00;}
+.badge-bloq{background:var(--red);color:#fff;}
+.admin-sec{font-size:10px;color:#888;font-weight:800;text-transform:uppercase;letter-spacing:2px;padding:6px 0 4px;border-bottom:2px solid #eee;margin-top:20px;}
+.admin-box{background:#fff;border-radius:20px;border:1px solid #eee;padding:16px;margin-top:10px;}
+.stat-mini{text-align:center;}
+.stat-mini .num{font-size:26px;font-weight:900;color:var(--accent);}
+.stat-mini .lbl{font-size:10px;color:#888;font-weight:700;text-transform:uppercase;}
+#previo-campos{display:none;}
+#previo-resumen{display:none;background:#fff;border-radius:10px;padding:12px;margin-top:8px;text-align:center;}
+#cuota-preview{display:none;background:#FFF3E0;border-radius:12px;padding:12px;margin:8px 0;text-align:center;}
+.btn-soporte{display:none;align-items:center;justify-content:center;gap:8px;padding:12px 28px;border-radius:50px;border:none;background:#25D366;color:white;font-weight:900;font-size:13px;cursor:pointer;box-shadow:0 6px 20px rgba(37,211,102,0.3);position:fixed;bottom:100px;left:50%;transform:translateX(-50%);white-space:nowrap;z-index:150;}
+#notif-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.88);z-index:19999;justify-content:center;align-items:flex-end;}
+#notif-box{background:#fff;width:100%;max-width:480px;border-radius:35px 35px 0 0;padding:25px;max-height:88vh;overflow-y:auto;}
+.notif-group-title{font-size:10px;font-weight:900;text-transform:uppercase;letter-spacing:2px;margin:14px 0 6px;border-bottom:1px solid #eee;padding-bottom:4px;}
+.notif-cli-card{background:#F9F9F9;border-radius:12px;padding:12px 14px;margin-bottom:8px;display:flex;justify-content:space-between;align-items:center;gap:10px;}
+.notif-send-btn{background:#25D366;color:white;border:none;border-radius:9px;padding:8px 12px;font-size:10px;font-weight:900;cursor:pointer;white-space:nowrap;flex-shrink:0;}
+.notif-send-btn.sent{background:#aaa;}
+.abono-header{background:#000;border-radius:16px;padding:20px;text-align:center;margin-bottom:15px;}
+.abono-monto-big{font-size:40px;font-weight:900;color:var(--accent);}
+#wakelock-dot{width:7px;height:7px;border-radius:50%;background:#555;display:inline-block;margin-left:6px;vertical-align:middle;}
+#wakelock-dot.on{background:var(--green);}
+#toast{position:fixed;bottom:clamp(70px,12vh,100px);left:50%;transform:translateX(-50%);background:#FF7A00;color:#fff;padding:11px 24px;border-radius:30px;font-size:12px;font-weight:800;z-index:999999;opacity:0;transition:opacity 0.3s;pointer-events:none;white-space:nowrap;max-width:90vw;text-align:center;box-shadow:0 6px 20px rgba(255,122,0,0.35);}
+#toast.show{opacity:1;}
+#zona-admin{position:fixed;bottom:0;left:0;right:0;height:55px;z-index:4999;cursor:pointer;}
+</style>
+</head>
+body>
+
+<!-- ══ SPLASH ══ -->
+<div id="splash">
+  <div class="circle-bg"></div>
+  <div class="ring ring-1"></div>
+  <div class="ring ring-2"></div>
+  <div class="logo-container" id="logo-tap">
+    <div class="logo-sam">SAM</div>
+    <div class="logo-linea"></div>
+    <div class="logo-sub">Sistema de Cobranza</div>
+  </div>
+  <div class="tap-txt">Toca para ingresar</div>
+  <div style="position:absolute;bottom:clamp(12px,3vh,20px);font-size:10px;font-weight:700;color:rgba(200,90,0,0.3);letter-spacing:2px;cursor:pointer;" onclick="irRegistro()">¿Primera vez? Regístrate aquí</div>
+  <div class="barra-wrap"><div class="barra" id="barra"></div></div>
+</div>
+
+<!-- ══ PANTALLA PIN ══ -->
+<div id="pantalla-pin">
+  <div class="pin-modo" id="pin-modo">ACCESO</div>
+  <div class="pin-dots" id="pin-dots"></div>
+  <div class="teclas">
+    <button class="tecla" onclick="teclar(1)">1</button><button class="tecla" onclick="teclar(2)">2</button><button class="tecla" onclick="teclar(3)">3</button>
+    <button class="tecla" onclick="teclar(4)">4</button><button class="tecla" onclick="teclar(5)">5</button><button class="tecla" onclick="teclar(6)">6</button>
+    <button class="tecla" onclick="teclar(7)">7</button><button class="tecla" onclick="teclar(8)">8</button><button class="tecla" onclick="teclar(9)">9</button>
+    <button class="tecla borrar" onclick="teclar('C')">⌫</button><button class="tecla" onclick="teclar(0)">0</button><button class="tecla entrar" onclick="validarPin()">OK</button>
+  </div>
+  <div class="sesion-wrap">
+    <div class="sesion-label">Cerrar sesión en</div>
+    <select class="sesion-select" id="session-limit">
+      <option value="60000">1 Minuto</option>
+      <option value="3600000" selected>1 Hora</option>
+      <option value="7200000">2 Horas</option>
+    </select>
+  </div>
+  <div style="margin-top:20px;font-size:11px;color:rgba(200,90,0,0.4);cursor:pointer;font-weight:700;" onclick="irSplash()">← Volver</div>
+</div>
+
+<!-- ══ REGISTRO EMPRESA ══ -->
+<div id="pantalla-registro">
+  <div style="width:100%;max-width:420px">
+    <div style="text-align:center;margin-bottom:24px">
+      <div style="font-family:'Exo 2',sans-serif;font-weight:900;font-size:40px;letter-spacing:8px;color:#FF7A00;">SAM</div>
+      <div style="font-size:12px;font-weight:800;color:#888;letter-spacing:2px;margin-top:4px;">NUEVA EMPRESA</div>
+    </div>
+    <label>Nombre de tu empresa o negocio</label><input type="text" id="reg-empresa" autocomplete="off" placeholder="Ej: Distribuidora López">
+    <label>Tu nombre</label><input type="text" id="reg-nombre" autocomplete="off" placeholder="Nombre del dueño">
+    <label>Correo electrónico</label><input type="email" id="reg-correo" placeholder="correo@ejemplo.com">
+    <label>WhatsApp (para soporte)</label>
+    <div style="display:flex;gap:6px">
+      <select id="reg-pref" style="width:90px"><option value="593">+593</option><option value="57">+57</option><option value="51">+51</option><option value="52">+52</option><option value="54">+54</option></select>
+      <input type="number" id="reg-tel" style="flex:1" inputmode="tel" placeholder="Número">
+    </div>
+    <label>Crea tu PIN de acceso (4 dígitos)</label><input type="number" id="reg-pin" maxlength="4" inputmode="numeric" placeholder="••••">
+    <label>Confirma tu PIN</label><input type="number" id="reg-pin2" maxlength="4" inputmode="numeric" placeholder="••••">
+    <div style="background:#FFF8F3;border-radius:14px;padding:14px;margin-top:12px;border:1px solid rgba(255,122,0,0.2)">
+      <div style="font-size:12px;font-weight:800;color:#FF7A00;margin-bottom:4px;">📦 Empiezas en Plan BÁSICO — Gratis</div>
+      <div style="font-size:11px;color:#888;line-height:1.6;">✅ Hasta 30 clientes<br>✅ Comprobantes de pago<br>✅ Historial y edición<br>✅ Migrar clientes anteriores<br>✅ WhatsApp manual</div>
+    </div>
+    <button class="btn-m" onclick="registrarEmpresa()">🚀 CREAR MI CUENTA</button>
+    <button class="btn-m" style="background:none;color:#888;" onclick="irSplash()">← Volver</button>
+  </div>
+</div>
+
+<!-- ══ PANEL SUPER ADMIN ══ -->
+<div id="p-superadmin" class="panel">
+  <div class="nav-top">⚙ SUPER ADMIN <button class="btn-exit" onclick="location.reload()">SALIR</button></div>
+  <div class="panel-inner" style="padding:16px">
+    <div class="admin-sec">📊 ESTADÍSTICAS</div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:10px">
+      <div class="admin-box stat-mini"><div class="num" id="sa-n-empresas">0</div><div class="lbl">Empresas</div></div>
+      <div class="admin-box stat-mini"><div class="num" id="sa-n-basico">0</div><div class="lbl">Plan Básico</div></div>
+      <div class="admin-box stat-mini"><div class="num" id="sa-n-pro">0</div><div class="lbl">Profesional</div></div>
+      <div class="admin-box stat-mini"><div class="num" id="sa-n-emp">0</div><div class="lbl">Empresarial</div></div>
+    </div>
+    <div class="admin-sec">🏢 EMPRESAS</div>
+    <input type="text" id="sa-buscar" placeholder="🔍 Buscar empresa..." oninput="filtrarEmpresas()" style="margin:10px 0">
+    <div id="sa-lista"></div>
+  </div>
+</div>
+
+<!-- ══ PANEL ADMIN EMPRESA ══ -->
+<div id="p-admin" class="panel">
+  <div class="nav-top"><span id="adm-nav-nom">MI EMPRESA</span><button class="btn-exit" onclick="location.reload()">SALIR</button></div>
+  <div class="panel-inner" style="padding:16px">
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+      <div class="admin-box stat-mini"><div class="num" id="adm-cartera">$0</div><div class="lbl">Cartera</div></div>
+      <div class="admin-box stat-mini"><div class="num" id="adm-nclientes">0</div><div class="lbl">Clientes</div></div>
+    </div>
+    <div class="admin-sec">📦 MI PLAN</div>
+    <div class="admin-box" style="display:flex;justify-content:space-between;align-items:center">
+      <div><div style="font-size:16px;font-weight:900" id="adm-plan-nom">BÁSICO</div><div style="font-size:11px;color:#888" id="adm-plan-vence"></div></div>
+      <button class="btn-m" style="width:auto;padding:10px 16px;font-size:12px;margin:0" onclick="abrirPlanes()">⬆ MEJORAR</button>
+    </div>
+    <div class="admin-sec">👥 COBRADORES</div>
+    <div id="adm-lista-cobradores"></div>
+    <div id="adm-btn-cobrador-wrap"><button class="btn-m" style="background:#000;margin-top:8px" onclick="openM('m-nuevo-cobrador')">+ NUEVO COBRADOR</button></div>
+    <div class="admin-sec">✏️ MENSAJES WHATSAPP</div>
+    <div class="admin-box">
+      <div style="font-size:11px;color:#888;margin-bottom:8px">Variables: <b>{nombre}</b> {saldo} {cuota} {fecha} {monto}</div>
+      <label>📅 Recordatorio</label>
+      <textarea id="cfg-msg-1" rows="3">Hola {nombre}, le recordamos que se acerca su fecha de pago el {fecha}. Saldo: ${saldo}. ¡Gracias!</textarea>
+      <label>💰 Pago hoy</label>
+      <textarea id="cfg-msg-2" rows="3">Hola {nombre}, hoy corresponde su abono de ${cuota}. Estaremos atentos. ¡Gracias!</textarea>
+      <label>🔴 Atrasado</label>
+      <textarea id="cfg-msg-3" rows="3">Estimado(a) {nombre}, su cuenta tiene un saldo pendiente de ${saldo}. Le pedimos ponerse al día. Gracias.</textarea>
+      <label>✅ Confirmación de pago</label>
+      <textarea id="cfg-msg-4" rows="3">✅ Hola {nombre}, confirmamos su pago de ${monto}. Saldo actual: ${saldo}. ¡Gracias por su puntualidad!</textarea>
+      <button class="btn-m" onclick="guardarMensajes()">💾 GUARDAR MENSAJES</button>
+    </div>
+    <div class="admin-sec">⚙ CONFIGURACIÓN</div>
+    <div class="admin-box">
+      <label>Número soporte WhatsApp</label>
+      <div style="display:flex;gap:6px">
+        <select id="cfg-pref-sop" style="width:90px"><option value="593">+593</option><option value="57">+57</option><option value="51">+51</option><option value="52">+52</option></select>
+        <input type="number" id="cfg-num-sop" placeholder="Número" style="flex:1">
+      </div>
+      <button class="btn-m" style="margin-top:10px" onclick="guardarSoporte()">GUARDAR</button>
+    </div>
+    <div class="admin-sec">🔐 CAMBIAR PIN</div>
+    <div class="admin-box">
+      <label>PIN Actual</label><input type="number" id="adm-pin-actual" placeholder="••••">
+      <label>Nuevo PIN</label><input type="number" id="adm-pin-nuevo" placeholder="••••">
+      <label>Confirmar PIN</label><input type="number" id="adm-pin-conf" placeholder="••••">
+      <button class="btn-m" onclick="cambiarPinAdmin()">CAMBIAR PIN</button>
+    </div>
+  </div>
+</div>
+<!-- ══ PANEL COBRADOR ══ -->
+<div id="p-user" class="panel">
+  <div class="nav-top">
+    <span id="nom-u-nav">COBRADOR <span id="wakelock-dot"></span></span>
+    <div style="display:flex;gap:8px;align-items:center">
+      <button class="btn-exit" style="background:#333" onclick="openM('m-config-notif')">⚙</button>
+      <button class="btn-exit" onclick="location.reload()">SALIR</button>
+    </div>
+  </div>
+  <div class="panel-inner">
+    <div class="header">
+      <div style="font-size:10px;color:#AAA;margin-bottom:4px">⏱ <span id="timer-display">00:00</span> &nbsp;|&nbsp; <span id="inact-display" style="color:#FF9500"></span></div>
+      <div id="u-total" style="font-size:clamp(34px,10vw,45px);font-weight:900;color:var(--accent)">$ 0.00</div>
+      <div style="font-size:11px;color:#666;margin-top:4px" id="u-clientes-count">0 clientes</div>
+    </div>
+    <div style="padding:10px clamp(12px,3vw,18px) 0">
+      <input type="text" id="buscar-cli" placeholder="🔍 Buscar cliente..." oninput="filtrarClientes()" style="margin:0">
+    </div>
+    <div id="lista-clientes"></div>
+  </div>
+  <button class="fab" onclick="openM('m-nuevo-cliente')">+</button>
+  <button class="btn-soporte" id="btn-soporte" onclick="abrirSoporte()">💬 SOPORTE</button>
+</div>
+<!-- ══ MODAL DETALLE CLIENTE ══ -->
+<div id="m-det-cliente" class="modal">
+  <div class="box">
+    <h2 id="det-nom" style="color:var(--accent);margin:0 0 4px"></h2>
+    <div style="font-size:11px;color:#aaa;font-weight:700;margin-bottom:12px" id="det-prod"></div>
+    <div class="info-row"><span>Fecha Entrada:</span><b id="det-fentrada" style="color:#888">---</b></div>
+    <div class="info-row"><span>Fecha Cobro:</span><b id="det-fcobro">---</b></div>
+    <div class="info-row"><span>Dirección:</span><b id="det-dir">---</b></div>
+    <div class="info-row"><span>Frecuencia:</span><b id="det-frec">---</b></div>
+    <div class="info-row"><span>Cuota:</span><b id="det-cuota" style="color:var(--accent)">---</b></div>
+    <div class="info-row" style="font-size:clamp(15px,4vw,18px)"><span>Saldo:</span><b id="det-saldo" style="color:var(--red)">$ 0.00</b></div>
+    <label>NOTIFICACIONES WHATSAPP</label>
+    <div class="wa-grid">
+      <button class="wa-btn" onclick="enviarWA(1)">RECORDAR</button>
+      <button class="wa-btn" onclick="enviarWA(2)" style="background:#FF9500">PAGO HOY</button>
+      <button class="wa-btn" onclick="enviarWA(3)" style="background:var(--red)">ATRASADO</button>
+    </div>
+    <label>HISTORIAL <span style="font-size:9px;color:#bbb;text-transform:none;border:none;font-weight:600">(toca para editar)</span></label>
+    <div id="det-hist" class="hist-box"></div>
+    <label>REGISTRAR PAGO</label>
+    <div style="display:flex;gap:8px;align-items:center">
+      <input type="number" id="input-abono" placeholder="Monto $" inputmode="decimal" style="flex:1;margin:5px 0">
+      <button style="background:var(--accent);color:#fff;border:none;border-radius:12px;padding:14px 12px;font-weight:900;font-size:12px;white-space:nowrap;cursor:pointer" onclick="usarCuota()">CUOTA</button>
+    </div>
+    <button class="btn-m" onclick="registrarAbono()">✅ REGISTRAR PAGO</button>
+    <button class="btn-m" style="background:#555" onclick="abrirEditarCliente()">✏️ EDITAR CLIENTE</button>
+    <button class="btn-m" style="background:var(--red)" onclick="eliminarCliente()">🗑 ELIMINAR CLIENTE</button>
+    <button class="btn-m" style="background:none;color:#888" onclick="closeM()">CERRAR</button>
+  </div>
+</div>
+
+<!-- ══ MODAL NUEVO CLIENTE ══ -->
+<div id="m-nuevo-cliente" class="modal">
+  <div class="box">
+    <h3 style="margin:0 0 12px">➕ NUEVA VENTA</h3>
+    <label>Nombre Cliente</label><input type="text" id="nc-nom" autocomplete="off">
+    <label>Producto / Guía</label><input type="text" id="nc-prod" autocomplete="off">
+    <label>WhatsApp</label>
+    <div style="display:flex;gap:6px">
+      <select id="nc-pref" style="width:90px"><option value="593">+593</option><option value="57">+57</option><option value="51">+51</option><option value="52">+52</option></select>
+      <input type="number" id="nc-tel" style="flex:1" inputmode="tel">
+    </div>
+    <div style="display:flex;gap:10px">
+      <div style="flex:1"><label>Total $</label><input type="number" id="nc-tot" inputmode="decimal" oninput="calcularCuota();calcularPrevio()"></div>
+      <div style="flex:1"><label>Entrada $</label><input type="number" id="nc-ini" value="0" inputmode="decimal" oninput="calcularCuota();calcularPrevio()"></div>
+    </div>
+    <label>N° de Cuotas</label><input type="number" id="nc-ncuotas" placeholder="Ej: 12" inputmode="numeric" oninput="calcularCuota();calcularPrevio()">
+    <label>Frecuencia</label>
+    <select id="nc-frec" onchange="calcularCuota()"><option>Diario</option><option>Semanal</option><option>Quincenal</option><option selected>Mensual</option></select>
+    <div id="cuota-preview"><div style="font-size:10px;color:#888;font-weight:800">CUOTA CALCULADA</div><div id="cuota-valor" style="font-size:26px;font-weight:900;color:var(--accent)">$ 0.00</div></div>
+    <label>Dirección</label><input type="text" id="nc-dir" autocomplete="off">
+    <label>Fecha Primer Cobro</label><input type="date" id="nc-fecha">
+    <div style="background:#FFF8F3;border-radius:16px;padding:14px;margin-top:12px;border:1px solid rgba(255,122,0,0.2)">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
+        <div><div style="font-size:12px;font-weight:800;color:#FF7A00">📋 ¿Cliente con historial previo?</div><div style="font-size:10px;color:#aaa;margin-top:2px">Si ya tenía pagos antes del sistema</div></div>
+        <label class="toggle"><input type="checkbox" id="nc-tiene-previo" onchange="togglePrevio()"><span class="slider"></span></label>
+      </div>
+      <div id="previo-campos">
+        <label style="border:none;margin-top:0">Fecha real de inicio</label>
+        <input type="date" id="nc-fecha-inicio">
+        <label style="border:none;margin-top:8px">Cuotas que ya pagó</label>
+        <input type="number" id="nc-cuotas-pag" value="0" min="0" inputmode="numeric" oninput="calcularPrevio()">
+        <div id="previo-resumen">
+          <div style="font-size:10px;color:#888;font-weight:700">YA PAGÓ</div>
+          <div style="font-size:22px;font-weight:900;color:var(--green)" id="previo-pagado">$ 0.00</div>
+          <div style="font-size:10px;color:#888;font-weight:700;margin-top:6px">SALDO A COBRAR</div>
+          <div style="font-size:22px;font-weight:900;color:var(--red)" id="previo-saldo">$ 0.00</div>
+        </div>
+      </div>
+    </div>
+    <button class="btn-m" onclick="crearCliente()">💾 GUARDAR VENTA</button>
+    <button class="btn-m" style="background:none;color:#888" onclick="closeM()">CANCELAR</button>
+  </div>
+</div>
+
+<!-- ══ MODAL EDITAR CLIENTE ══ -->
+<div id="m-editar-cliente" class="modal">
+  <div class="box">
+    <h3 style="margin:0 0 12px">✏️ EDITAR CLIENTE</h3>
+    <label>Nombre</label><input type="text" id="ec-nom">
+    <label>Producto / Guía</label><input type="text" id="ec-prod">
+    <label>WhatsApp</label>
+    <div style="display:flex;gap:6px">
+      <select id="ec-pref" style="width:90px"><option value="593">+593</option><option value="57">+57</option><option value="51">+51</option><option value="52">+52</option></select>
+      <input type="number" id="ec-tel" style="flex:1">
+    </div>
+    <label>Saldo Actual $</label><input type="number" id="ec-saldo" inputmode="decimal">
+    <label>Cuota $</label><input type="number" id="ec-cuota" inputmode="decimal">
+    <label>Dirección</label><input type="text" id="ec-dir">
+    <label>Fecha Entrada</label><input type="date" id="ec-fentrada">
+    <label>Fecha Cobro</label><input type="date" id="ec-fecha">
+    <label>Frecuencia</label>
+    <select id="ec-frec"><option>Diario</option><option>Semanal</option><option>Quincenal</option><option>Mensual</option></select>
+    <button class="btn-m" onclick="guardarEdicionCliente()">💾 GUARDAR CAMBIOS</button>
+    <button class="btn-m" style="background:none;color:#888" onclick="closeM()">CANCELAR</button>
+  </div>
+</div>
+
+<!-- ══ MODAL DETALLE ABONO ══ -->
+<div id="m-abono-det" class="modal">
+  <div class="box">
+    <div class="abono-header">
+      <div style="font-size:10px;color:#aaa;font-weight:700;letter-spacing:2px">COMPROBANTE</div>
+      <div class="abono-monto-big" id="abd-monto">$ 0.00</div>
+      <div style="font-size:12px;color:#aaa;margin-top:4px" id="abd-num"></div>
+    </div>
+    <div class="info-row"><span>Cliente:</span><b id="abd-cli"></b></div>
+    <div class="info-row"><span>Fecha:</span><b id="abd-fecha"></b></div>
+    <div class="info-row"><span>Cobrador:</span><b id="abd-cobrador"></b></div>
+    <div class="info-row"><span>Saldo después:</span><b id="abd-saldo" style="color:var(--red)"></b></div>
+    <button class="btn-m" onclick="reenviarComprobante()">📄 VER COMPROBANTE</button>
+    <button class="btn-m" style="background:#25D366" onclick="reenviarWA()">📲 REENVIAR WHATSAPP</button>
+    <label>EDITAR MONTO</label>
+    <div style="display:flex;gap:8px;margin-top:5px">
+      <input type="number" id="abd-nuevo-monto" placeholder="Nuevo monto $" inputmode="decimal" style="flex:1">
+      <button class="btn-m" style="width:auto;padding:13px 18px;margin:0" onclick="guardarEdicionAbono()">OK</button>
+    </div>
+    <button class="btn-m" style="background:var(--red);margin-top:12px" onclick="eliminarAbono()">🗑 ELIMINAR ABONO</button>
+    <button class="btn-m" style="background:none;color:#888" onclick="closeM()">CERRAR</button>
+  </div>
+</div>
+
+<!-- ══ MODAL NUEVO COBRADOR ══ -->
+<div id="m-nuevo-cobrador" class="modal">
+  <div class="box">
+    <h3 style="margin:0 0 12px">👤 NUEVO COBRADOR</h3>
+    <label>Nombre</label><input type="text" id="nco-nom">
+    <label>PIN (4 dígitos)</label><input type="number" id="nco-pin" inputmode="numeric">
+    <label>Vigencia hasta</label><input type="date" id="nco-vence">
+    <button class="btn-m" onclick="crearCobrador()">CREAR</button>
+    <button class="btn-m" style="background:none;color:#888" onclick="closeM()">CANCELAR</button>
+  </div>
+</div>
+<!-- ══ MODAL EDITAR COBRADOR ══ -->
+<div id="m-editar-cobrador" class="modal">
+  <div class="box">
+    <h3 style="margin:0 0 12px">✏️ EDITAR COBRADOR</h3>
+    <label>Nombre</label><input type="text" id="eco-nom">
+    <label>PIN</label><input type="number" id="eco-pin">
+    <label>Estado</label>
+    <select id="eco-status"><option value="activo">ACTIVO</option><option value="desactivado">DESACTIVADO</option></select>
+    <label>Vigencia hasta</label><input type="date" id="eco-vence">
+    <button class="btn-m" onclick="guardarCobrador()">GUARDAR</button>
+    <button class="btn-m" style="background:var(--red)" onclick="eliminarCobrador()">ELIMINAR</button>
+    <button class="btn-m" style="background:none;color:#888" onclick="closeM()">CANCELAR</button>
+  </div>
+</div>
+
+<!-- ══ MODAL CONFIG NOTIF ══ -->
+<div id="m-config-notif" class="modal">
+  <div class="box">
+    <h3 style="margin:0 0 4px">⚙ CONFIGURACIÓN</h3>
+    <div class="toggle-wrap"><span>🔔 Notificaciones automáticas</span><label class="toggle"><input type="checkbox" id="cfg-sw" onchange="toggleSW()"><span class="slider"></span></label></div>
+    <div class="cfg-row"><span>📅 Días antes (recordatorio)</span><input type="number" id="cfg-dias-rec" value="2" min="0" max="30" inputmode="numeric"></div>
+    <div class="cfg-row"><span>🔴 Días de atraso</span><input type="number" id="cfg-dias-atr" value="1" min="1" max="30" inputmode="numeric"></div>
+    <label>Hora de envío</label><input type="time" id="cfg-hora" value="08:00">
+    <button class="btn-m" onclick="guardarConfigNotif()">GUARDAR</button>
+    <button class="btn-m" style="background:#555" onclick="probarNotif()">🧪 PROBAR AHORA</button>
+    <button class="btn-m" style="background:none;color:#888" onclick="closeM()">CERRAR</button>
+  </div>
+</div>
+
+<!-- ══ MODAL SA EMPRESA ══ -->
+<div id="m-sa-emp" class="modal">
+  <div class="box">
+    <h3 id="sa-emp-titulo" style="color:var(--accent);margin:0 0 10px"></h3>
+    <div class="info-row"><span>Plan:</span><b id="sa-emp-plan"></b></div>
+    <div class="info-row"><span>Vence:</span><b id="sa-emp-vence"></b></div>
+    <div class="info-row"><span>Estado:</span><b id="sa-emp-status"></b></div>
+    <div class="info-row"><span>Correo:</span><b id="sa-emp-correo"></b></div>
+    <label>CAMBIAR PLAN</label>
+    <select id="sa-nuevo-plan"><option value="basico">BÁSICO — Gratis</option><option value="profesional">PROFESIONAL — $9.99/mes</option><option value="empresarial">EMPRESARIAL — $19.99/mes</option></select>
+    <label>Vence el</label><input type="date" id="sa-nueva-vence">
+    <label>CAMBIAR PIN</label><input type="number" id="sa-nuevo-pin" placeholder="Nuevo PIN (4 dígitos)">
+    <label>CAMBIAR CORREO</label><input type="email" id="sa-nuevo-correo" placeholder="correo@empresa.com">
+    <label>ESTADO</label>
+    <select id="sa-nuevo-status"><option value="activo">ACTIVO</option><option value="bloqueado">BLOQUEADO</option></select>
+    <button class="btn-m" onclick="guardarEmpresaSA()">💾 GUARDAR CAMBIOS</button>
+    <button class="btn-m" style="background:#25D366" onclick="contactarEmpresa()">💬 WHATSAPP</button>
+    <button class="btn-m" style="background:none;color:#888" onclick="closeM()">CERRAR</button>
+  </div>
+</div>
+
+<!-- ══ PLANES OVERLAY ══ -->
+<div id="plan-overlay">
+  <div id="plan-box">
+    <h2 style="margin:0 0 6px">📦 Planes SAM</h2>
+    <p style="font-size:12px;color:#888;margin-bottom:18px">Elige el plan para tu negocio</p>
+    <div class="plan-card" onclick="solicitarPlan('basico')">
+      <div class="plan-nombre">BÁSICO</div>
+      <div class="plan-precio">Gratis</div>
+      <div class="plan-feature">✅ 30 clientes · ✅ Comprobantes · ✅ Historial previo · ✅ WhatsApp manual · ❌ Sin cobradores · ❌ Sin notif. auto</div>
+    </div>
+    <div class="plan-card pro" onclick="solicitarPlan('profesional')">
+      <div class="plan-nombre">PROFESIONAL <span class="plan-badge">POPULAR</span></div>
+      <div class="plan-precio">$9.99<span style="font-size:14px;color:#888">/mes</span></div>
+      <div class="plan-feature">✅ Clientes ilimitados · ✅ 4 cobradores · ✅ Notificaciones auto · ✅ Mensajes personalizados · ✅ Reportes básicos</div>
+    </div>
+    <div class="plan-card emp" onclick="solicitarPlan('empresarial')">
+      <div class="plan-nombre">EMPRESARIAL</div>
+      <div class="plan-precio">$19.99<span style="font-size:14px;color:#888">/mes</span></div>
+      <div class="plan-feature">✅ Todo el Profesional · ✅ 8 cobradores · ✅ Auditoría completa · ✅ Soporte prioritario</div>
+    </div>
+    <button class="btn-m" style="background:none;color:#888" onclick="cerrarPlanes()">CERRAR</button>
+  </div>
+</div>
+
+<!-- ══ NOTIF OVERLAY ══ -->
+<div id="notif-overlay">
+  <div id="notif-box">
+    <h3 style="margin:0 0 6px">📲 Notificaciones</h3>
+    <p id="notif-subtitle" style="font-size:12px;color:#888;margin:0 0 12px"></p>
+    <div id="notif-lista"></div>
+    <button class="btn-m" onclick="enviarTodas()">ENVIAR TODAS</button>
+    <button class="btn-m" style="background:#555" onclick="cerrarNotif()">OMITIR</button>
+  </div>
+</div>
+
+<!-- ══ COMPROBANTE ══ -->
+<div id="comprobante-wrap">
+  <div id="comprobante-container">
+    <div id="comprobante-canvas-box"></div>
+    <div class="comp-actions">
+      <button class="comp-btn dl" onclick="descargarComp()">⬇ BAJAR</button>
+      <button class="comp-btn wa" onclick="compartirWAComp()">📲 WA</button>
+      <button class="comp-btn cl" onclick="cerrarComp()">✕ CERRAR</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══ RECIBO OFF-SCREEN ══ -->
+<div id="recibo-visual">
+  <div class="rv-header"><div class="rv-logo">SAM</div><div class="rv-sub">COMPROBANTE DE PAGO</div></div>
+  <div class="rv-line"></div>
+  <div class="rv-body">
+    <div class="rv-title">DETALLE DEL PAGO</div>
+    <div class="rv-row"><span>Cobrador:</span><b id="r-cobrador"></b></div>
+    <div class="rv-row"><span>Cliente:</span><b id="r-cliente"></b></div>
+    <div class="rv-row"><span>Producto:</span><b id="r-prod"></b></div>
+    <div class="rv-row"><span>Fecha:</span><b id="r-fecha"></b></div>
+    <div class="rv-row"><span>Hora:</span><b id="r-hora"></b></div>
+    <div class="rv-row"><span>N° Comp:</span><b id="r-num"></b></div>
+    <div class="rv-monto"><div class="rv-monto-lbl">MONTO PAGADO</div><div class="rv-monto-val" id="r-monto">$ 0.00</div></div>
+    <div class="rv-saldo"><div class="rv-saldo-lbl">SALDO PENDIENTE</div><div class="rv-saldo-val" id="r-saldo">$ 0.00</div></div>
+  </div>
+  <div class="rv-footer">SISTEMA SAM 3.0 · GESTIÓN DE COBRANZA · GRACIAS POR SU PAGO</div>
+</div>
+
+<div id="zona-admin"></div>
+<div id="toast"></div>
+
+<script>
+// ══════════════════════════════════════════════════════
+// FIREBASE CONFIG
+// ══════════════════════════════════════════════════════
+const firebaseConfig={apiKey:"AIzaSyCMsogo0q4Dnfekl8yo1L3lNX5Nq4uDSCE",authDomain:"samsow-ec106.firebaseapp.com",projectId:"samsow-ec106",appId:"1:357978468958:web:aae1c84c9e84744e5f3acf"};
+firebase.initializeApp(firebaseConfig);
+const db=firebase.firestore();
+
+// ══════════════════════════════════════════════════════
+// ESTADO GLOBAL
+// ══════════════════════════════════════════════════════
+const PIN_SUPERADMIN="9999"; // ← CAMBIA ESTE PIN POR EL TUYO
+let pinIngresado="",esModoSA=false;
+let empresaActiva=null,uSesion=null,cliActivo=null,abonoActivo=null,abonoActivoIdx=-1;
+let todosClientes=[],empActivaSA=null,cobradorActivo=null;
+
+// ══════════════════════════════════════════════════════
+// UTILIDADES
+// ══════════════════════════════════════════════════════
+const sj=o=>JSON.stringify(o).replace(/'/g,"&#39;");
+function toast(msg,dur=2500){const t=document.getElementById('toast');t.innerText=msg;t.classList.add('show');clearTimeout(t._t);t._t=setTimeout(()=>t.classList.remove('show'),dur);}
+function openM(id){document.getElementById(id).style.display='flex';}
+function closeM(){document.querySelectorAll('.modal').forEach(m=>m.style.display='none');}
+function irSplash(){document.getElementById('pantalla-pin').style.display='none';document.getElementById('pantalla-registro').style.display='none';document.getElementById('splash').style.display='flex';}
+function irRegistro(){document.getElementById('splash').style.display='none';document.getElementById('pantalla-registro').style.display='flex';}
+function lsGet(k,d=''){try{return localStorage.getItem('sam_'+k)||d;}catch(e){return d;}}
+function lsSet(k,v){try{localStorage.setItem('sam_'+k,v);}catch(e){}}
+function getMsgs(){return{
+  1:lsGet('msg1','Hola {nombre}, le recordamos que se acerca su fecha de pago el {fecha}. Saldo: ${saldo}. ¡Gracias!'),
+  2:lsGet('msg2','Hola {nombre}, hoy corresponde su abono de ${cuota}. Estaremos atentos. ¡Gracias!'),
+  3:lsGet('msg3','Estimado(a) {nombre}, su cuenta tiene saldo pendiente de ${saldo}. Le pedimos ponerse al día. Gracias.'),
+  4:lsGet('msg4','✅ Hola {nombre}, confirmamos su pago de ${monto}. Saldo actual: ${saldo}. ¡Gracias!')
+};}
+
+// ══════════════════════════════════════════════════════
+// SPLASH / CARGA
+// ══════════════════════════════════════════════════════
+window.addEventListener('load',()=>{
+  const b=document.getElementById('barra');
+  setTimeout(()=>b.style.width='35%',150);
+  setTimeout(()=>b.style.width='75%',500);
+  setTimeout(()=>b.style.width='100%',900);
+  const msgs=getMsgs();
+  [1,2,3,4].forEach(i=>{const el=document.getElementById(`cfg-msg-${i}`);if(el)el.value=msgs[i];});
+});
+document.getElementById('logo-tap').addEventListener('click',()=>abrirPin(false));
+document.getElementById('logo-tap').addEventListener('touchend',e=>{e.preventDefault();abrirPin(false);});
+document.getElementById('zona-admin').addEventListener('click',()=>abrirPin(true));
+document.getElementById('zona-admin').addEventListener('touchend',e=>{e.preventDefault();abrirPin(true);});
+document.querySelectorAll('.modal').forEach(m=>m.addEventListener('click',function(e){if(e.target===this)closeM();}));
+
+// ══════════════════════════════════════════════════════
+// PIN
+// ══════════════════════════════════════════════════════
+function abrirPin(sa){
+  esModoSA=sa;
+  document.getElementById('splash').style.display='none';
+  document.getElementById('pantalla-pin').style.display='flex';
+  document.getElementById('pin-modo').innerText=sa?'⚙ SUPER ADMIN':'ACCESO';
+  pinIngresado='';
+  document.getElementById('pin-dots').innerText='';
+}
+function teclar(n){
+  if(n==='C')pinIngresado=pinIngresado.slice(0,-1);
+  else if(pinIngresado.length<4)pinIngresado+=n;
+  document.getElementById('pin-dots').innerText='●'.repeat(pinIngresado.length)||'';
+}
+async function validarPin(){
+  if(esModoSA){
+    if(pinIngresado===PIN_SUPERADMIN){iniciarSuperAdmin();}
+    else{toast("PIN incorrecto");pinIngresado='';document.getElementById('pin-dots').innerText='';}
+    return;
+  }
+  toast("Verificando...",1500);
+  const qEmp=await db.collection("empresas").where("pin","==",pinIngresado).where("status","==","activo").get();
+  if(!qEmp.empty){
+    empresaActiva={...qEmp.docs[0].data(),id:qEmp.docs[0].id};
+    iniciarAdmin();return;
+  }
+  const qCob=await db.collectionGroup("cobradores").where("pin","==",pinIngresado).where("status","==","activo").get();
+  if(!qCob.empty){
+    const cob=qCob.docs[0];
+    const hoy=new Date().toISOString().split('T')[0];
+    const cobData={...cob.data(),id:cob.id};
+    if(cobData.vence&&hoy>cobData.vence){toast("Acceso expirado");return;}
+    const empId=cob.ref.parent.parent.id;
+    const empDoc=await db.collection("empresas").doc(empId).get();
+    if(!empDoc.exists||empDoc.data().status!=='activo'){toast("Empresa no disponible");return;}
+    empresaActiva={...empDoc.data(),id:empId};
+    uSesion=cobData;
+    iniciarCobrador();return;
+  }
+  toast("PIN incorrecto");
+  pinIngresado='';document.getElementById('pin-dots').innerText='';
+}
+
+// ══════════════════════════════════════════════════════
+// REGISTRO NUEVA EMPRESA
+// ══════════════════════════════════════════════════════
+async function registrarEmpresa(){
+  const nom=document.getElementById('reg-empresa').value.trim();
+  const owner=document.getElementById('reg-nombre').value.trim();
+  const correo=document.getElementById('reg-correo').value.trim();
+  const tel=document.getElementById('reg-tel').value.trim();
+  const pref=document.getElementById('reg-pref').value;
+  const pin=document.getElementById('reg-pin').value;
+  const pin2=document.getElementById('reg-pin2').value;
+  if(!nom||!owner||!pin){toast("Completa todos los campos");return;}
+  if(pin.length<4){toast("El PIN debe tener 4 dígitos");return;}
+  if(pin!==pin2){toast("Los PINes no coinciden");return;}
+  toast("Creando cuenta...",3000);
+  try{
+    await db.collection("empresas").add({
+      nombre:nom,owner,correo,telefono:tel,prefijo:pref,pin,
+      plan:'basico',planVence:'',status:'activo',
+      creadoEn:new Date().toISOString()
+    });
+    toast("✅ ¡Cuenta creada! Ya puedes ingresar con tu PIN");
+    setTimeout(()=>{document.getElementById('pantalla-registro').style.display='none';abrirPin(false);},2000);
+  }catch(e){toast("Error: "+e.message);}
+}
+
+// ══════════════════════════════════════════════════════
+// SUPER ADMIN
+// ══════════════════════════════════════════════════════
+function iniciarSuperAdmin(){
+  document.getElementById('pantalla-pin').style.display='none';
+  document.getElementById('p-superadmin').style.display='block';
+  cargarEmpresasSA();
+}
+let todasEmpresas=[];
+function cargarEmpresasSA(){
+  db.collection("empresas").onSnapshot(snap=>{
+    todasEmpresas=[];
+    let bas=0,pro=0,emp=0;
+    snap.forEach(doc=>{
+      const d={...doc.data(),id:doc.id};
+      todasEmpresas.push(d);
+      if(d.plan==='profesional')pro++;
+      else if(d.plan==='empresarial')emp++;
+      else bas++;
+    });
+    document.getElementById('sa-n-empresas').innerText=todasEmpresas.length;
+    document.getElementById('sa-n-basico').innerText=bas;
+    document.getElementById('sa-n-pro').innerText=pro;
+    document.getElementById('sa-n-emp').innerText=emp;
+    renderizarEmpresas(todasEmpresas);
+  });
+}
+function renderizarEmpresas(lista){
+  let h='';
+  lista.forEach(e=>{
+    const badge=e.plan==='profesional'?'badge-pro':e.plan==='empresarial'?'badge-emp':e.status==='bloqueado'?'badge-bloq':'badge-basico';
+    const planTxt=e.plan==='profesional'?'PRO':e.plan==='empresarial'?'EMP':'BÁSICO';
+    h+=`<div class="sa-empresa-card" onclick='abrirEmpresaSA(${sj(e)})'>
+      <div style="display:flex;justify-content:space-between;align-items:center">
+        <div><b>${e.nombre}</b><br><small style="color:#888">${e.owner||''} · ${e.correo||''}</small></div>
+        <span class="badge ${badge}">${e.status==='bloqueado'?'BLOQ':planTxt}</span>
+      </div>
+    </div>`;
+  });
+  document.getElementById('sa-lista').innerHTML=h||'<p style="color:#bbb;text-align:center;padding:20px">Sin empresas registradas</p>';
+}
+function filtrarEmpresas(){
+  const q=document.getElementById('sa-buscar').value.toLowerCase();
+  renderizarEmpresas(todasEmpresas.filter(e=>(e.nombre||'').toLowerCase().includes(q)||(e.owner||'').toLowerCase().includes(q)));
+}
+function abrirEmpresaSA(e){
+  empActivaSA=e;
+  document.getElementById('sa-emp-titulo').innerText=e.nombre;
+  document.getElementById('sa-emp-plan').innerText=e.plan||'basico';
+  document.getElementById('sa-emp-vence').innerText=e.planVence||'Sin vencimiento';
+  document.getElementById('sa-emp-status').innerText=e.status||'activo';
+  document.getElementById('sa-emp-correo').innerText=e.correo||'---';
+  document.getElementById('sa-nuevo-plan').value=e.plan||'basico';
+  document.getElementById('sa-nueva-vence').value=e.planVence||'';
+  document.getElementById('sa-nuevo-pin').value='';
+  document.getElementById('sa-nuevo-correo').value=e.correo||'';
+  document.getElementById('sa-nuevo-status').value=e.status||'activo';
+  openM('m-sa-emp');
+}
+async function guardarEmpresaSA(){
+  if(!empActivaSA)return;
+  const datos={
+    plan:document.getElementById('sa-nuevo-plan').value,
+    planVence:document.getElementById('sa-nueva-vence').value,
+    correo:document.getElementById('sa-nuevo-correo').value,
+    status:document.getElementById('sa-nuevo-status').value
+  };
+  const nuevoPin=document.getElementById('sa-nuevo-pin').value;
+  if(nuevoPin&&nuevoPin.length>=4)datos.pin=nuevoPin;
+  await db.collection("empresas").doc(empActivaSA.id).update(datos);
+  toast("✅ Empresa actualizada");closeM();
+}
+function contactarEmpresa(){
+  if(!empActivaSA||!empActivaSA.telefono)return;
+  window.open(`https://wa.me/${empActivaSA.prefijo||''}${empActivaSA.telefono}?text=${encodeURIComponent('Hola '+empActivaSA.owner+', soy el equipo SAM. ')}`,'_blank');
+}
+
+// ══════════════════════════════════════════════════════
+// ADMIN EMPRESA
+// ══════════════════════════════════════════════════════
+function iniciarAdmin(){
+  document.getElementById('pantalla-pin').style.display='none';
+  document.getElementById('p-admin').style.display='block';
+  document.getElementById('adm-nav-nom').innerText=empresaActiva.nombre;
+  document.getElementById('adm-plan-nom').innerText=(empresaActiva.plan||'basico').toUpperCase();
+  document.getElementById('adm-plan-vence').innerText=empresaActiva.planVence?'Vence: '+empresaActiva.planVence:'';
+  cargarDatosAdmin();
+  cargarCobradores();
+  const msgs=getMsgs();
+  [1,2,3,4].forEach(i=>{const el=document.getElementById(`cfg-msg-${i}`);if(el)el.value=msgs[i];});
+  const sop=lsGet('sop_num','');const sopPref=lsGet('sop_pref','593');
+  document.getElementById('cfg-num-sop').value=sop;
+  document.getElementById('cfg-pref-sop').value=sopPref;
+  const plan=empresaActiva.plan||'basico';
+  if(plan==='basico'){document.getElementById('adm-btn-cobrador-wrap').style.display='none';}
+}
+async function cargarDatosAdmin(){
+  db.collection("empresas").doc(empresaActiva.id).collection("clientes").onSnapshot(snap=>{
+    let total=0,n=0;
+    snap.forEach(d=>{total+=d.data().saldo||0;n++;});
+    document.getElementById('adm-cartera').innerText=`$${total.toFixed(0)}`;
+    document.getElementById('adm-nclientes').innerText=n;
+  });
+}
+function cargarCobradores(){
+  db.collection("empresas").doc(empresaActiva.id).collection("cobradores").onSnapshot(snap=>{
+    let h='';
+    snap.forEach(doc=>{
+      const u={...doc.data(),id:doc.id};
+      h+=`<div class="card" onclick='editarCobrador(${sj(u)})'>
+        <div style="display:flex;align-items:center">
+          <span class="status-dot" style="background:${u.status==='activo'?'var(--green)':'var(--red)'}"></span>
+          <div><b>${u.nombre}</b><br><small>PIN: ${u.pin}</small></div>
+        </div>
+        <small style="color:#aaa">${u.vence||''}</small>
+      </div>`;
+    });
+    document.getElementById('adm-lista-cobradores').innerHTML=h||'<p style="font-size:12px;color:#bbb;text-align:center;padding:10px">Sin cobradores</p>';
+  });
+}
+async function crearCobrador(){
+  const plan=empresaActiva.plan||'basico';
+  const limites={basico:0,profesional:4,empresarial:8};
+  const snap=await db.collection("empresas").doc(empresaActiva.id).collection("cobradores").get();
+  if(snap.size>=(limites[plan]||0)){abrirPlanes();return;}
+  const nom=document.getElementById('nco-nom').value.trim();
+  const pin=document.getElementById('nco-pin').value;
+  const vence=document.getElementById('nco-vence').value;
+  if(!nom||!pin){toast("Completa nombre y PIN");return;}
+  await db.collection("empresas").doc(empresaActiva.id).collection("cobradores").add({nombre:nom,pin,vence,status:'activo'});
+  toast("✅ Cobrador creado");closeM();
+  ['nco-nom','nco-pin','nco-vence'].forEach(id=>document.getElementById(id).value='');
+}
+function editarCobrador(u){
+  cobradorActivo=u;
+  document.getElementById('eco-nom').value=u.nombre;
+  document.getElementById('eco-pin').value=u.pin;
+  document.getElementById('eco-status').value=u.status;
+  document.getElementById('eco-vence').value=u.vence||'';
+  openM('m-editar-cobrador');
+}
+async function guardarCobrador(){
+  if(!cobradorActivo)return;
+  await db.collection("empresas").doc(empresaActiva.id).collection("cobradores").doc(cobradorActivo.id).update({
+    nombre:document.getElementById('eco-nom').value,
+    pin:document.getElementById('eco-pin').value,
+    status:document.getElementById('eco-status').value,
+    vence:document.getElementById('eco-vence').value
+  });
+  toast("✅ Guardado");closeM();
+}
+async function eliminarCobrador(){
+  if(!cobradorActivo)return;
+  if(!confirm(`¿Eliminar a ${cobradorActivo.nombre}?`))return;
+  await db.collection("empresas").doc(empresaActiva.id).collection("cobradores").doc(cobradorActivo.id).delete();
+  toast("Cobrador eliminado");closeM();
+}
+function guardarMensajes(){
+  [1,2,3,4].forEach(i=>{const el=document.getElementById(`cfg-msg-${i}`);if(el)lsSet(`msg${i}`,el.value);});
+  toast("✅ Mensajes guardados");
+}
+function guardarSoporte(){
+  lsSet('sop_num',document.getElementById('cfg-num-sop').value);
+  lsSet('sop_pref',document.getElementById('cfg-pref-sop').value);
+  toast("✅ Número guardado");
+}
+async function cambiarPinAdmin(){
+  const actual=document.getElementById('adm-pin-actual').value;
+  const nuevo=document.getElementById('adm-pin-nuevo').value;
+  const conf=document.getElementById('adm-pin-conf').value;
+  if(actual!==empresaActiva.pin){toast("PIN actual incorrecto");return;}
+  if(nuevo.length<4){toast("El PIN debe tener 4 dígitos");return;}
+  if(nuevo!==conf){toast("Los PINes no coinciden");return;}
+  await db.collection("empresas").doc(empresaActiva.id).update({pin:nuevo});
+  toast("✅ PIN actualizado");
+  ['adm-pin-actual','adm-pin-nuevo','adm-pin-conf'].forEach(id=>document.getElementById(id).value='');
+}
+
+// ══════════════════════════════════════════════════════
+// COBRADOR — INICIO Y CLIENTES
+// ══════════════════════════════════════════════════════
+function iniciarCobrador(){
+  document.getElementById('pantalla-pin').style.display='none';
+  document.getElementById('p-user').style.display='block';
+  document.getElementById('nom-u-nav').innerHTML=uSesion.nombre+' <span id="wakelock-dot"></span>';
+  const sop=lsGet('sop_num','');
+  const btnSop=document.getElementById('btn-soporte');
+  if(sop)btnSop.style.display='flex';
+  document.getElementById('cfg-sw').checked=lsGet('sw','false')==='true';
+  document.getElementById('cfg-dias-rec').value=lsGet('dias_rec','2');
+  document.getElementById('cfg-dias-atr').value=lsGet('dias_atr','1');
+  document.getElementById('cfg-hora').value=lsGet('hora_notif','08:00');
+  const msgs=getMsgs();
+  [1,2,3,4].forEach(i=>{const el=document.getElementById(`cfg-msg-${i}`);if(el)el.value=msgs[i];});
+  cargarClientes();
+  iniciarCronometro();
+  activarWakeLock();
+  if(lsGet('sw','false')==='true')programarNotif();
+}
+function cargarClientes(){
+  db.collection("empresas").doc(empresaActiva.id).collection("clientes").where("creadoPor","==",uSesion.nombre).onSnapshot(snap=>{
+    todosClientes=[];let total=0;
+    snap.forEach(doc=>{const c={...doc.data(),id:doc.id};todosClientes.push(c);total+=c.saldo||0;});
+    document.getElementById('u-total').innerText=`$ ${total.toFixed(2)}`;
+    document.getElementById('u-clientes-count').innerText=`${todosClientes.length} clientes`;
+    renderizarClientes(todosClientes);
+  });
+}
+function renderizarClientes(lista){
+  const hoy=new Date().toISOString().split('T')[0];
+  let h='';
+  lista.forEach(c=>{
+    let color='var(--green)';
+    if(c.saldo>0&&c.fechaCobro&&c.fechaCobro<hoy)color='var(--red)';
+    else if(c.saldo>0&&c.fechaCobro&&c.fechaCobro===hoy)color='#FF9500';
+    h+=`<div class="card" onclick='abrirFicha(${sj(c)})'>
+      <div style="display:flex;align-items:center">
+        <span class="status-dot" style="background:${color}"></span>
+        <div><b>${c.nombre}</b><br><small>${c.prod||'General'} · ${c.frecuencia||''}</small></div>
+      </div>
+      <div style="text-align:right">
+        <b>$${(c.saldo||0).toFixed(2)}</b>
+        ${c.cuota?`<br><small style="color:#aaa">$${parseFloat(c.cuota).toFixed(2)}/cuota</small>`:''}
+      </div>
+    </div>`;
+  });
+  document.getElementById('lista-clientes').innerHTML=h||'<p style="text-align:center;color:#bbb;padding:30px">Sin clientes aún.<br>Toca + para agregar.</p>';
+}
+function filtrarClientes(){
+  const q=document.getElementById('buscar-cli').value.toLowerCase();
+  renderizarClientes(todosClientes.filter(c=>(c.nombre||'').toLowerCase().includes(q)));
+}
+function abrirSoporte(){
+  const num=lsGet('sop_num','');const pref=lsGet('sop_pref','593');
+  if(num)window.open(`https://wa.me/${pref}${num}`,'_blank');
+}
+
+// ══════════════════════════════════════════════════════
+// FICHA CLIENTE
+// ══════════════════════════════════════════════════════
+function abrirFicha(c){
+  cliActivo=c;
+  document.getElementById('det-nom').innerText=c.nombre;
+  document.getElementById('det-prod').innerText=c.prod||'';
+  document.getElementById('det-fentrada').innerText=c.fechaEntrada||'---';
+  document.getElementById('det-fcobro').innerText=c.fechaCobro||'---';
+  document.getElementById('det-dir').innerText=c.direccion||'---';
+  document.getElementById('det-frec').innerText=c.frecuencia||'---';
+  document.getElementById('det-cuota').innerText=c.cuota?`$ ${parseFloat(c.cuota).toFixed(2)}`:'---';
+  document.getElementById('det-saldo').innerText=`$ ${(c.saldo||0).toFixed(2)}`;
+  renderHistorial(c);
+  openM('m-det-cliente');
+}
+function renderHistorial(c){
+  const hist=(c.historial||[]).slice().reverse();
+  if(!hist.length){document.getElementById('det-hist').innerHTML='<p style="font-size:12px;color:#bbb;text-align:center;padding:10px">Sin movimientos.</p>';return;}
+  let h='';
+  hist.forEach((p,i)=>{
+    const realIdx=(c.historial||[]).length-1-i;
+    const num=p.numComp||('SAM-'+c.id.slice(-6).toUpperCase()+i);
+    const editTag=p.editado?` <span style="color:#FF9500;font-size:9px">✏ editado</span>`:'';
+    const prevTag=p.esPrevio?` <span style="color:#007AFF;font-size:9px">📋 previo al sistema</span>`:'';
+    h+=`<div class="hist-item" onclick='abrirDetalleAbono(${sj(p)},${realIdx},${sj(c)})'>
+      <div style="flex:1;min-width:0">
+        <b style="font-size:13px">${p.fecha}${p.hora&&p.hora!='--:--'?' · '+p.hora:''}</b>${editTag}${prevTag}
+        <div class="hist-hint">${p.esPrevio?`📋 ${p.cuotasPagadas||''} cuotas previas`:`📄 ${num} · toca para editar`}</div>
+      </div>
+      <b style="font-size:14px;color:var(--green);margin-left:8px;white-space:nowrap">+$ ${parseFloat(p.monto).toFixed(2)}</b>
+    </div>`;
+  });
+  document.getElementById('det-hist').innerHTML=h;
+}
+function usarCuota(){
+  if(cliActivo&&cliActivo.cuota)document.getElementById('input-abono').value=parseFloat(cliActivo.cuota).toFixed(2);
+}
+
+// ══════════════════════════════════════════════════════
+// REGISTRAR ABONO
+// ══════════════════════════════════════════════════════
+async function registrarAbono(){
+  const m=parseFloat(document.getElementById('input-abono').value);
+  if(!m||m<=0){toast("Ingresa un monto válido");return;}
+  const plan=empresaActiva.plan||'basico';
+  if(plan==='basico'){
+    const snap=await db.collection("empresas").doc(empresaActiva.id).collection("clientes").get();
+    if(snap.size>=30&&!todosClientes.find(c=>c.id===cliActivo.id)){abrirPlanes();return;}
+  }
+  const nuevoSaldo=cliActivo.saldo-m;
+  const ahora=new Date();
+  const fechaStr=ahora.toLocaleDateString('es-ES',{day:'2-digit',month:'2-digit',year:'numeric'});
+  const horaStr=ahora.toLocaleTimeString('es-ES',{hour:'2-digit',minute:'2-digit'});
+  const numComp="SAM-"+Date.now().toString().slice(-8);
+  await db.collection("empresas").doc(empresaActiva.id).collection("clientes").doc(cliActivo.id).update({
+    saldo:nuevoSaldo,
+    historial:firebase.firestore.FieldValue.arrayUnion({monto:m,fecha:fechaStr,hora:horaStr,numComp,saldoDespues:nuevoSaldo,cobrador:uSesion.nombre})
+  });
+  closeM();document.getElementById('input-abono').value='';cliActivo.saldo=nuevoSaldo;
+  mostrarComprobante({monto:m,saldo:nuevoSaldo,fecha:fechaStr,hora:horaStr,num:numComp,cliente:cliActivo});
+  if(cliActivo.telefono){
+    setTimeout(()=>{
+      if(confirm(`¿Enviar confirmación de pago a ${cliActivo.nombre}?`))
+        dispararWA({...cliActivo,saldo:nuevoSaldo},4,{monto:m});
+    },1500);
+  }
+}
+
+// ══════════════════════════════════════════════════════
+// CREAR CLIENTE
+// ══════════════════════════════════════════════════════
+async function crearCliente(){
+  const plan=empresaActiva.plan||'basico';
+  if(plan==='basico'){
+    const snap=await db.collection("empresas").doc(empresaActiva.id).collection("clientes").get();
+    if(snap.size>=30){abrirPlanes();return;}
+  }
+  const nom=document.getElementById('nc-nom').value.trim();
+  if(!nom){toast("Ingresa un nombre");return;}
+  const tot=parseFloat(document.getElementById('nc-tot').value)||0;
+  const ini=parseFloat(document.getElementById('nc-ini').value)||0;
+  const n=parseInt(document.getElementById('nc-ncuotas').value)||0;
+  const cuotaVal=n>0?((tot-ini)/n):0;
+  const tienePrevio=document.getElementById('nc-tiene-previo').checked;
+  const cuotasPag=parseInt(document.getElementById('nc-cuotas-pag').value)||0;
+  const montoPrevio=tienePrevio&&cuotasPag>0?cuotasPag*cuotaVal:0;
+  const fechaInicio=tienePrevio?document.getElementById('nc-fecha-inicio').value:document.getElementById('nc-fecha').value;
+  const saldoInicial=Math.max(0,(tot-ini)-montoPrevio);
+  const histInicial=[];
+  if(tienePrevio&&montoPrevio>0){
+    histInicial.push({
+      monto:parseFloat(montoPrevio.toFixed(2)),
+      fecha:fechaInicio?new Date(fechaInicio+'T12:00:00').toLocaleDateString('es-ES',{day:'2-digit',month:'2-digit',year:'numeric'}):new Date().toLocaleDateString('es-ES'),
+      hora:'--:--',
+      numComp:'PREVIO-'+cuotasPag+'CUOTAS',
+      saldoDespues:saldoInicial,
+      esPrevio:true,
+      cuotasPagadas:cuotasPag
+    });
+  }
+  await db.collection("empresas").doc(empresaActiva.id).collection("clientes").add({
+    nombre:nom,
+    prod:document.getElementById('nc-prod').value,
+    prefijo:document.getElementById('nc-pref').value,
+    telefono:document.getElementById('nc-tel').value,
+    saldo:saldoInicial,
+    cuota:cuotaVal>0?cuotaVal.toFixed(2):null,
+    numeroCuotas:n||null,
+    direccion:document.getElementById('nc-dir').value,
+    frecuencia:document.getElementById('nc-frec').value,
+    fechaEntrada:fechaInicio,
+    fechaCobro:document.getElementById('nc-fecha').value,
+    creadoPor:uSesion.nombre,
+    historial:histInicial
+  });
+  toast("✅ Cliente guardado");closeM();
+  ['nc-nom','nc-prod','nc-tel','nc-tot','nc-dir','nc-fecha','nc-ncuotas','nc-fecha-inicio'].forEach(id=>document.getElementById(id).value='');
+  document.getElementById('nc-ini').value='0';
+  document.getElementById('nc-cuotas-pag').value='0';
+  document.getElementById('nc-tiene-previo').checked=false;
+  document.getElementById('previo-campos').style.display='none';
+  document.getElementById('previo-resumen').style.display='none';
+  document.getElementById('cuota-preview').style.display='none';
+}
+function togglePrevio(){
+  const on=document.getElementById('nc-tiene-previo').checked;
+  document.getElementById('previo-campos').style.display=on?'block':'none';
+  if(!on)document.getElementById('previo-resumen').style.display='none';
+}
+function calcularCuota(){
+  const tot=parseFloat(document.getElementById('nc-tot').value)||0;
+  const ini=parseFloat(document.getElementById('nc-ini').value)||0;
+  const n=parseInt(document.getElementById('nc-ncuotas').value)||0;
+  if(tot>0&&n>0){
+    document.getElementById('cuota-preview').style.display='block';
+    document.getElementById('cuota-valor').innerText=`$ ${((tot-ini)/n).toFixed(2)}`;
+  }else document.getElementById('cuota-preview').style.display='none';
+}
+function calcularPrevio(){
+  const tot=parseFloat(document.getElementById('nc-tot').value)||0;
+  const ini=parseFloat(document.getElementById('nc-ini').value)||0;
+  const n=parseInt(document.getElementById('nc-ncuotas').value)||0;
+  const pag=parseInt(document.getElementById('nc-cuotas-pag').value)||0;
+  if(!tot||!n||!pag){document.getElementById('previo-resumen').style.display='none';return;}
+  const cuota=(tot-ini)/n;
+  const pagado=cuota*pag;
+  const saldo=(tot-ini)-pagado;
+  document.getElementById('previo-pagado').innerText=`$ ${pagado.toFixed(2)}`;
+  document.getElementById('previo-saldo').innerText=`$ ${Math.max(0,saldo).toFixed(2)}`;
+  document.getElementById('previo-resumen').style.display='block';
+}
+
+// ══════════════════════════════════════════════════════
+// EDITAR Y ELIMINAR CLIENTE
+// ══════════════════════════════════════════════════════
+function abrirEditarCliente(){
+  const c=cliActivo;
+  document.getElementById('ec-nom').value=c.nombre||'';
+  document.getElementById('ec-prod').value=c.prod||'';
+  document.getElementById('ec-pref').value=c.prefijo||'593';
+  document.getElementById('ec-tel').value=c.telefono||'';
+  document.getElementById('ec-saldo').value=c.saldo||0;
+  document.getElementById('ec-cuota').value=c.cuota||'';
+  document.getElementById('ec-dir').value=c.direccion||'';
+  document.getElementById('ec-fentrada').value=c.fechaEntrada||'';
+  document.getElementById('ec-fecha').value=c.fechaCobro||'';
+  document.getElementById('ec-frec').value=c.frecuencia||'Mensual';
+  closeM();setTimeout(()=>openM('m-editar-cliente'),200);
+}
+async function guardarEdicionCliente(){
+  const datos={
+    nombre:document.getElementById('ec-nom').value.trim(),
+    prod:document.getElementById('ec-prod').value,
+    prefijo:document.getElementById('ec-pref').value,
+    telefono:document.getElementById('ec-tel').value,
+    saldo:parseFloat(document.getElementById('ec-saldo').value)||0,
+    cuota:parseFloat(document.getElementById('ec-cuota').value)||null,
+    direccion:document.getElementById('ec-dir').value,
+    fechaEntrada:document.getElementById('ec-fentrada').value,
+    fechaCobro:document.getElementById('ec-fecha').value,
+    frecuencia:document.getElementById('ec-frec').value
+  };
+  if(!datos.nombre){toast("Ingresa un nombre");return;}
+  await db.collection("empresas").doc(empresaActiva.id).collection("clientes").doc(cliActivo.id).update(datos);
+  toast("✅ Cliente actualizado");closeM();
+}
+async function eliminarCliente(){
+  if(!confirm(`¿Eliminar a ${cliActivo.nombre}?`))return;
+  await db.collection("empresas").doc(empresaActiva.id).collection("clientes").doc(cliActivo.id).delete();
+  toast("Cliente eliminado");closeM();
+}
+
+// ══════════════════════════════════════════════════════
+// DETALLE ABONO
+// ══════════════════════════════════════════════════════
+function abrirDetalleAbono(p,idx,c){
+  abonoActivo=p;abonoActivoIdx=idx;cliActivo=c;
+  document.getElementById('abd-monto').innerText=`$ ${parseFloat(p.monto).toFixed(2)}`;
+  document.getElementById('abd-num').innerText=p.numComp||'---';
+  document.getElementById('abd-cli').innerText=c.nombre;
+  document.getElementById('abd-fecha').innerText=p.fecha+(p.hora&&p.hora!='--:--'?' · '+p.hora:'');
+  document.getElementById('abd-cobrador').innerText=p.cobrador||uSesion.nombre;
+  document.getElementById('abd-saldo').innerText=p.saldoDespues!=null?`$ ${parseFloat(p.saldoDespues).toFixed(2)}`:'---';
+  document.getElementById('abd-nuevo-monto').value='';
+  closeM();setTimeout(()=>openM('m-abono-det'),200);
+}
+function reenviarComprobante(){
+  const p=abonoActivo,c=cliActivo;
+  mostrarComprobante({monto:p.monto,saldo:p.saldoDespues||c.saldo,fecha:p.fecha,hora:p.hora||'',num:p.numComp||'SAM',cliente:c});
+}
+function reenviarWA(){
+  dispararWA(cliActivo,4,{monto:abonoActivo.monto});
+}
+async function guardarEdicionAbono(){
+  const nuevo=parseFloat(document.getElementById('abd-nuevo-monto').value);
+  if(!nuevo||nuevo<=0){toast("Monto inválido");return;}
+  const hist=[...(cliActivo.historial||[])];
+  const dif=nuevo-hist[abonoActivoIdx].monto;
+  hist[abonoActivoIdx]={...hist[abonoActivoIdx],monto:nuevo,saldoDespues:(hist[abonoActivoIdx].saldoDespues||0)-dif,editado:true};
+  const nuevoSaldo=(cliActivo.saldo||0)-dif;
+  await db.collection("empresas").doc(empresaActiva.id).collection("clientes").doc(cliActivo.id).update({saldo:nuevoSaldo,historial:hist});
+  toast("✅ Abono editado");closeM();
+}
+async function eliminarAbono(){
+  if(!confirm("¿Eliminar este abono?"))return;
+  const hist=[...(cliActivo.historial||[])];
+  const montoEliminado=hist[abonoActivoIdx].monto;
+  hist.splice(abonoActivoIdx,1);
+  const nuevoSaldo=(cliActivo.saldo||0)+montoEliminado;
+  await db.collection("empresas").doc(empresaActiva.id).collection("clientes").doc(cliActivo.id).update({saldo:nuevoSaldo,historial:hist});
+  toast("Abono eliminado");closeM();
+}
+// ══════════════════════════════════════════════════════
+// WHATSAPP
+// ══════════════════════════════════════════════════════
+function aplicarVars(txt,c,extra){
+  return txt
+    .replace(/{nombre}/g,c.nombre||'')
+    .replace(/{saldo}/g,(c.saldo||0).toFixed(2))
+    .replace(/{cuota}/g,c.cuota?parseFloat(c.cuota).toFixed(2):'0.00')
+    .replace(/{fecha}/g,c.fechaCobro||'')
+    .replace(/{monto}/g,extra&&extra.monto?parseFloat(extra.monto).toFixed(2):'0.00');
+}
+function dispararWA(c,tipo,extra){
+  const msgs=getMsgs();
+  const dflt={
+    1:`Hola ${c.nombre}, se acerca su fecha de pago. Saldo: $${(c.saldo||0).toFixed(2)}.`,
+    2:`Hola ${c.nombre}, hoy corresponde su abono de $${c.cuota||0}.`,
+    3:`Estimado(a) ${c.nombre}, su cuenta tiene saldo pendiente de $${(c.saldo||0).toFixed(2)}.`,
+    4:`✅ Hola ${c.nombre}, confirmamos su pago. Gracias.`
+  };
+  const txt=msgs[tipo]?aplicarVars(msgs[tipo],c,extra):dflt[tipo];
+  window.open(`https://wa.me/${c.prefijo}${c.telefono}?text=${encodeURIComponent(txt)}`,'_blank');
+}
+function enviarWA(tipo){dispararWA(cliActivo,tipo);}
+
+// ══════════════════════════════════════════════════════
+// COMPROBANTE
+// ══════════════════════════════════════════════════════
+let ultimoComprobanteBlob=null,ultimoComprobanteCliente=null;
+function mostrarComprobante({monto,saldo,fecha,hora,num,cliente}){
+  ultimoComprobanteCliente=cliente;
+  document.getElementById('r-cobrador').innerText=uSesion.nombre;
+  document.getElementById('r-cliente').innerText=cliente.nombre;
+  document.getElementById('r-prod').innerText=cliente.prod||'---';
+  document.getElementById('r-fecha').innerText=fecha;
+  document.getElementById('r-hora').innerText=hora;
+  document.getElementById('r-num').innerText=num;
+  document.getElementById('r-monto').innerText=`$ ${parseFloat(monto).toFixed(2)}`;
+  document.getElementById('r-saldo').innerText=`$ ${parseFloat(saldo).toFixed(2)}`;
+  const box=document.getElementById('comprobante-canvas-box');
+  box.innerHTML='';
+  setTimeout(()=>{
+    html2canvas(document.getElementById('recibo-visual'),{
+      scale:2,useCORS:true,backgroundColor:'#ffffff',logging:false
+    }).then(canvas=>{
+      box.appendChild(canvas);
+      canvas.toBlob(b=>ultimoComprobanteBlob=b,'image/png');
+      document.getElementById('comprobante-wrap').style.display='flex';
+    });
+  },100);
+}
+function descargarComp(){
+  const canvas=document.querySelector('#comprobante-canvas-box canvas');
+  if(!canvas)return;
+  const a=document.createElement('a');
+  a.download=`SAM_${Date.now()}.png`;
+  a.href=canvas.toDataURL('image/png');
+  a.click();
+}
+async function compartirWAComp(){
+  const canvas=document.querySelector('#comprobante-canvas-box canvas');
+  if(!canvas)return;
+  const c=ultimoComprobanteCliente;
+  if(navigator.share&&navigator.canShare){
+    canvas.toBlob(async blob=>{
+      const file=new File([blob],'comprobante_SAM.png',{type:'image/png'});
+      if(navigator.canShare({files:[file]})){
+        await navigator.share({title:'Comprobante SAM',files:[file]});
+        return;
+      }
+      abrirWATxt(c);
+    },'image/png');
+  }else abrirWATxt(c);
+}
+function abrirWATxt(c){
+  const msg=`✅ *COMPROBANTE SAM*\n\n👤 ${document.getElementById('r-cliente').innerText}\n💵 ${document.getElementById('r-monto').innerText}\n📅 ${document.getElementById('r-fecha').innerText}\n🔖 ${document.getElementById('r-num').innerText}\n💳 Saldo: ${document.getElementById('r-saldo').innerText}`;
+  const tel=c&&c.prefijo&&c.telefono?`${c.prefijo}${c.telefono}`:'';
+  window.open(tel?`https://wa.me/${tel}?text=${encodeURIComponent(msg)}`:`https://wa.me/?text=${encodeURIComponent(msg)}`,'_blank');
+}
+function cerrarComp(){
+  document.getElementById('comprobante-wrap').style.display='none';
+  ultimoComprobanteBlob=null;
+}
+
+// ══════════════════════════════════════════════════════
+// PLANES
+// ══════════════════════════════════════════════════════
+function abrirPlanes(){
+  closeM();
+  setTimeout(()=>document.getElementById('plan-overlay').style.display='flex',200);
+}
+function cerrarPlanes(){
+  document.getElementById('plan-overlay').style.display='none';
+}
+function solicitarPlan(plan){
+  const precios={basico:'Gratis',profesional:'$9.99/mes',empresarial:'$19.99/mes'};
+  const msg=`Hola, quiero activar el Plan ${plan.toUpperCase()} (${precios[plan]}) para mi empresa ${empresaActiva?empresaActiva.nombre:''}. Por favor indíquenme cómo realizar el pago.`;
+  const sopNum=lsGet('sop_num','')||'593999999999';
+  const sopPref=lsGet('sop_pref','593');
+  window.open(`https://wa.me/${sopPref}${sopNum}?text=${encodeURIComponent(msg)}`,'_blank');
+  cerrarPlanes();
+}
+// ══════════════════════════════════════════════════════
+// NOTIFICACIONES
+// ══════════════════════════════════════════════════════
+function guardarConfigNotif(){
+  lsSet('sw',document.getElementById('cfg-sw').checked);
+  lsSet('dias_rec',document.getElementById('cfg-dias-rec').value);
+  lsSet('dias_atr',document.getElementById('cfg-dias-atr').value);
+  lsSet('hora_notif',document.getElementById('cfg-hora').value);
+  toast("✅ Configuración guardada");
+  closeM();
+  if(document.getElementById('cfg-sw').checked)programarNotif();
+}
+function toggleSW(){
+  if(document.getElementById('cfg-sw').checked)programarNotif();
+}
+function programarNotif(){
+  const hora=lsGet('hora_notif','08:00');
+  const [h,m]=hora.split(':').map(Number);
+  const ahora=new Date();
+  const objetivo=new Date();
+  objetivo.setHours(h,m,0,0);
+  if(objetivo<=ahora)objetivo.setDate(objetivo.getDate()+1);
+  const diff=objetivo-ahora;
+  setTimeout(()=>{
+    mostrarPanelNotif();
+    setInterval(()=>mostrarPanelNotif(),86400000);
+  },diff);
+}
+function probarNotif(){closeM();setTimeout(()=>mostrarPanelNotif(),300);}
+function mostrarPanelNotif(){
+  const hoy=new Date().toISOString().split('T')[0];
+  const diasRec=parseInt(lsGet('dias_rec','2'));
+  const diasAtr=parseInt(lsGet('dias_atr','1'));
+  const recuerdo=[],hoyList=[],atrasado=[];
+  todosClientes.forEach(c=>{
+    if(!c.fechaCobro||c.saldo<=0)return;
+    const fc=new Date(c.fechaCobro+'T12:00:00');
+    const diff=Math.round((fc-new Date())/(1000*60*60*24));
+    if(diff<0&&Math.abs(diff)>=diasAtr)atrasado.push(c);
+    else if(diff===0)hoyList.push(c);
+    else if(diff>0&&diff<=diasRec)recuerdo.push(c);
+  });
+  window._notifGrupos={hoy:hoyList,recuerdo,atrasado};
+  let html='';
+  if(hoyList.length){
+    html+=`<div class="notif-group-title" style="color:#FF9500">💰 PAGO HOY (${hoyList.length})</div>`;
+    hoyList.forEach((c,i)=>{
+      html+=`<div class="notif-cli-card"><div><b>${c.nombre}</b><br><small>$${(c.saldo||0).toFixed(2)}</small></div><button class="notif-send-btn" id="nb2_${i}" onclick="sendN(${sj(c)},2,'nb2_${i}')">ENVIAR</button></div>`;
+    });
+  }
+  if(recuerdo.length){
+    html+=`<div class="notif-group-title" style="color:#007AFF">📅 RECORDATORIO (${recuerdo.length})</div>`;
+    recuerdo.forEach((c,i)=>{
+      html+=`<div class="notif-cli-card"><div><b>${c.nombre}</b><br><small>$${(c.saldo||0).toFixed(2)}</small></div><button class="notif-send-btn" id="nb1_${i}" onclick="sendN(${sj(c)},1,'nb1_${i}')">ENVIAR</button></div>`;
+    });
+  }
+  if(atrasado.length){
+    html+=`<div class="notif-group-title" style="color:var(--red)">🔴 ATRASADOS (${atrasado.length})</div>`;
+    atrasado.forEach((c,i)=>{
+      html+=`<div class="notif-cli-card"><div><b>${c.nombre}</b><br><small>$${(c.saldo||0).toFixed(2)}</small></div><button class="notif-send-btn" id="nb3_${i}" onclick="sendN(${sj(c)},3,'nb3_${i}')">ENVIAR</button></div>`;
+    });
+  }
+  if(!html)html='<p style="text-align:center;color:#bbb;padding:20px">Sin notificaciones pendientes hoy 🎉</p>';
+  document.getElementById('notif-lista').innerHTML=html;
+  document.getElementById('notif-subtitle').innerText=`${hoyList.length+recuerdo.length+atrasado.length} clientes requieren atención`;
+  document.getElementById('notif-overlay').style.display='flex';
+}
+function sendN(c,t,bid){
+  dispararWA(c,t);
+  const b=document.getElementById(bid);
+  if(b){b.innerText='✓';b.classList.add('sent');b.disabled=true;}
+}
+function enviarTodas(){
+  const g=window._notifGrupos||{};
+  let n=0;
+  [...(g.hoy||[])].forEach(c=>{dispararWA(c,2);n++;});
+  [...(g.recuerdo||[])].forEach(c=>{dispararWA(c,1);n++;});
+  [...(g.atrasado||[])].forEach(c=>{dispararWA(c,3);n++;});
+  cerrarNotif();
+  toast(`📲 ${n} WhatsApp${n>1?'s':''} abiertos`);
+}
+function cerrarNotif(){document.getElementById('notif-overlay').style.display='none';}
+
+// ══════════════════════════════════════════════════════
+// CRONÓMETRO + INACTIVIDAD
+// ══════════════════════════════════════════════════════
+function iniciarCronometro(){
+  const startTime=Date.now();
+  const limit=parseInt(document.getElementById('session-limit').value)||3600000;
+  let ultimaActividad=Date.now();
+  const eventos=['touchstart','mousedown','keydown','click','scroll'];
+  eventos.forEach(ev=>document.addEventListener(ev,()=>{ultimaActividad=Date.now();}));
+  setInterval(()=>{
+    const total=Math.floor((Date.now()-startTime)/1000);
+    const el=document.getElementById('timer-display');
+    if(el)el.innerText=`${String(Math.floor(total/60)).padStart(2,'0')}:${String(total%60).padStart(2,'0')}`;
+    const inact=Math.floor((Date.now()-ultimaActividad)/1000);
+    const reste=Math.floor((limit/1000)-inact);
+    const id=document.getElementById('inact-display');
+    if(id&&reste<300)id.innerText=`Cierra en: ${String(Math.floor(reste/60)).padStart(2,'0')}:${String(reste%60).padStart(2,'0')}`;
+    else if(id)id.innerText='';
+    if(inact>=(limit/1000))location.reload();
+  },1000);
+}
+
+// ══════════════════════════════════════════════════════
+// WAKE LOCK
+// ══════════════════════════════════════════════════════
+async function activarWakeLock(){
+  if('wakeLock'in navigator){
+    try{
+      await navigator.wakeLock.request('screen');
+      const dot=document.getElementById('wakelock-dot');
+      if(dot)dot.classList.add('on');
+      document.addEventListener('visibilitychange',async()=>{
+        if(document.visibilityState==='visible'){
+          try{await navigator.wakeLock.request('screen');}catch(e){}
+        }
+      });
+    }catch(e){}
+  }
+}
+
+</script>
+</body>
+</html>
